@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Editor</title>
+  <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Document Tabs Bar -->
+    <div id="tabs-bar" class="tabs-bar">
+      <div id="tabs-container" class="tabs-container"></div>
+    </div>
+
+    <!-- Main Toolbar -->
+    <div id="toolbar" class="toolbar">
+      <!-- Left Group -->
+      <div class="toolbar-group toolbar-left">
+        <button class="toolbar-btn" id="btn-toc" title="Table of Contents">
+          <img src="/src/icons/left/1_table_of_contents.png" alt="TOC" />
+        </button>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-btn-group">
+          <button class="toolbar-btn tool-btn" id="btn-highlight" title="Highlight" data-tool="highlight">
+            <img src="/src/icons/left/2_tool_highlight.png" alt="Highlight" />
+          </button>
+          <button class="toolbar-btn-arrow" id="btn-highlight-arrow" title="Highlight Options" data-tool="highlight">
+            <span>▼</span>
+          </button>
+        </div>
+        <div class="toolbar-btn-group">
+          <button class="toolbar-btn tool-btn" id="btn-draw" title="Draw" data-tool="draw">
+            <img src="/src/icons/left/3_tool_draw.png" alt="Draw" />
+          </button>
+          <button class="toolbar-btn-arrow" id="btn-draw-arrow" title="Draw Options" data-tool="draw">
+            <span>▼</span>
+          </button>
+        </div>
+        <button class="toolbar-btn tool-btn" id="btn-erase" title="Erase" data-tool="erase">
+          <img src="/src/icons/left/4_tool_erase.png" alt="Erase" />
+        </button>
+        <div class="toolbar-divider"></div>
+        <button class="toolbar-btn tool-btn" id="btn-text" title="Text" data-tool="text">
+          <img src="/src/icons/left/5_tool_text.png" alt="Text" />
+        </button>
+      </div>
+
+      <!-- Center Group -->
+      <div class="toolbar-group toolbar-center">
+        <button class="toolbar-btn" id="btn-zoom-out" title="Zoom Out">
+          <img src="/src/icons/center/6_view_zoom_out.png" alt="Zoom Out" />
+        </button>
+        <button class="toolbar-btn" id="btn-zoom-in" title="Zoom In">
+          <img src="/src/icons/center/7_view_zoom_in.png" alt="Zoom In" />
+        </button>
+        <button class="toolbar-btn" id="btn-fit-width" title="Fit to Width">
+          <img src="/src/icons/center/8_fit_to_width.png" alt="Fit Width" />
+        </button>
+        <div class="toolbar-divider"></div>
+        <input type="number" id="page-number" class="page-input" min="1" value="1" />
+        <span class="page-label" id="page-total">of 0</span>
+        <div class="toolbar-divider"></div>
+        <button class="toolbar-btn" id="btn-rotate" title="Rotate Page">
+          <img src="/src/icons/center/9_rotate_page.png" alt="Rotate" />
+        </button>
+        <div class="toolbar-divider"></div>
+        <button class="toolbar-btn" id="btn-page-layout" title="Page Layout">
+          <img src="/src/icons/center/10_view_page_layout.png" alt="Layout" />
+        </button>
+      </div>
+
+      <!-- Right Group -->
+      <div class="toolbar-group toolbar-right">
+        <button class="toolbar-btn" id="btn-search" title="Search (Ctrl+F)">
+          <img src="/src/icons/right/11_doc_search.png" alt="Search" />
+        </button>
+        <button class="toolbar-btn" id="btn-print" title="Print">
+          <img src="/src/icons/right/12_file_print.png" alt="Print" />
+        </button>
+        <button class="toolbar-btn" id="btn-save" title="Save">
+          <img src="/src/icons/right/13_file_save.png" alt="Save" />
+        </button>
+        <button class="toolbar-btn" id="btn-fullscreen" title="Fullscreen">
+          <img src="/src/icons/right/14_view_fullscreen.png" alt="Fullscreen" />
+        </button>
+        <button class="toolbar-btn" id="btn-settings" title="Settings">
+          <img src="/src/icons/right/15_app_settings.png" alt="Settings" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Sidebar -->
+      <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-title">Table of Contents</span>
+          <button class="sidebar-close" id="sidebar-close">✕</button>
+        </div>
+        <div class="sidebar-modes">
+          <button class="sidebar-mode-btn active" id="btn-outline-mode">Outline</button>
+          <button class="sidebar-mode-btn" id="btn-thumbnail-mode">Thumbnails</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-content"></div>
+      </div>
+
+      <!-- PDF Canvas Area -->
+      <div id="pdf-container" class="pdf-container">
+        <div id="pdf-viewer" class="pdf-viewer">
+          <div class="empty-state">
+            <p>Open a PDF to get started</p>
+            <button id="btn-open-file" class="open-file-btn">Open File</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popovers -->
+    <div id="popover-draw" class="popover" style="display: none;">
+      <div class="popover-section">
+        <label>Color</label>
+        <div class="color-grid" id="draw-color-grid"></div>
+      </div>
+      <div class="popover-section">
+        <label>Thickness</label>
+        <input type="range" id="draw-thickness" min="1" max="10" value="3" />
+        <div class="thickness-preview">
+          <div id="draw-thickness-preview" class="thickness-line"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="popover-highlight" class="popover highlight-popover" style="display: none;">
+      <div class="popover-section">
+        <div class="popover-section-title">Colours</div>
+        <div class="color-swatch-row" id="highlight-color-row">
+          <!-- Swatches will be injected by JS -->
+        </div>
+      </div>
+      <div class="highlight-stroke-preview">
+        <canvas id="highlight-stroke-canvas" class="highlight-stroke-canvas" width="90" height="24"></canvas>
+      </div>
+      <div class="thickness-section">
+        <div class="thickness-label-row">
+          Thickness <span class="info-icon" title="Thickness applies to future highlights only">ⓘ</span>
+        </div>
+        <div class="thickness-slider-row">
+          <span style="font-size:12px;color:#aaa;">Thin</span>
+          <input type="range" id="highlight-thickness-slider" class="thickness-slider" min="10" max="30" value="20" />
+          <span style="font-size:12px;color:#aaa;">Thick</span>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="toggle-row">
+        <span>Text only highlight</span>
+        <div id="highlight-text-toggle" class="toggle-switch"><div class="toggle-knob"></div></div>
+      </div>
+    </div>
+
+    <div id="popover-page-layout" class="popover" style="display: none;">
+      <div class="layout-option" data-layout="single">Single Page</div>
+      <div class="layout-option" data-layout="two-page">Two Page</div>
+    </div>
+
+    <div id="popover-settings" class="popover settings-popover" style="display: none;">
+      <div class="settings-option">
+        <label>
+          <input type="checkbox" id="setting-dark-mode" />
+          Dark Mode
+        </label>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-option">
+        <label>
+          <input type="checkbox" id="setting-pin-toolbar" />
+          Pin Toolbar
+        </label>
+      </div>
+      <div class="settings-option">
+        <label>
+          <input type="checkbox" id="setting-hide-annotations" />
+          Hide All Annotations
+        </label>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-option">
+        <button id="btn-doc-properties" class="doc-properties-btn">
+          <span class="info-icon">(i)</span> View Document Properties
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div id="search-bar" class="search-bar" style="display: none;">
+      <input type="text" id="search-input" placeholder="Search in document..." />
+      <button id="search-prev">↑</button>
+      <button id="search-next">↓</button>
+      <span id="search-results">0 of 0</span>
+      <button id="search-close">✕</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+## PDF Editor - Quick Start Guide
+
+### Installation & Running
+
+1. **Install Dependencies:**
+   ```bash
+   cd /home/omkarb/ws/vibe_coding/pdf/goon
+   npm install
+   ```
+
+2. **Run in Browser (Development):**
+   ```bash
+   npm run dev
+   ```
+   Then open http://localhost:5173 in your browser
+
+3. **Run as Desktop App (Full Features):**
+   ```bash
+   npm run electron:dev
+   ```
+   Or use the quick start script:
+   ```bash
+   ./start.sh
+   ```
+
+### How to Use
+
+#### Opening PDFs
+- **Browser**: Click "Open File" button and select PDF(s)
+- **Desktop App**: Use File > Open or click "Open File" button
+- **Drag & Drop**: Drag PDF files directly into the window
+- **Multiple Files**: Select multiple PDFs to open in separate tabs
+
+#### Navigation
+- **Page Navigation**: Use page number input or scroll
+- **Zoom**: Use zoom buttons or Ctrl +/- keyboard shortcuts
+- **Rotate**: Click rotate button to rotate pages 90° clockwise
+- **Fit to Width**: Auto-adjust zoom to fit page width
+
+#### Tabs
+- **Switch Tabs**: Click tab or use Ctrl+Tab / Ctrl+Shift+Tab
+- **Close Tab**: Click × button, middle-click, or press Ctrl+W
+- **Tab State**: Each tab remembers its zoom, page, tools, and annotations
+
+#### Table of Contents
+- Click the TOC icon (leftmost in toolbar)
+- Switch between Outline and Thumbnails modes
+- Click any item to navigate to that page
+- Close with × button or click TOC icon again
+
+#### Annotation Tools
+
+**Highlight Tool:**
+1. Click highlight icon
+2. Click dropdown arrow (▼) to open color/settings panel
+3. Choose color and thickness
+4. Toggle "Text only highlight" for text selection mode
+5. Click and drag to highlight
+
+**Draw Tool:**
+1. Click draw icon
+2. Click dropdown arrow (▼) for options
+3. Select from 30 colors
+4. Adjust thickness slider
+5. Click and drag to draw freehand
+
+**Erase Tool:**
+1. Click erase icon
+2. Click on annotations to remove them
+3. Works on both highlights and drawings
+
+**Text Tool:**
+1. Click text icon
+2. Click anywhere on the page
+3. Type your text in the prompt
+4. Edit later by clicking the text box
+
+#### Search
+- Press Ctrl+F or click search icon
+- Type search term
+- Use Enter/Shift+Enter or arrow buttons to navigate results
+- Results are highlighted in yellow
+- Press Escape to close search
+
+#### View Options
+- **Page Layout**: Click layout icon to choose Single Page or Two-Page view
+- **Fullscreen**: Click fullscreen icon or F11 (desktop app)
+- **Rotation**: Rotate current page with rotate button
+
+#### Settings
+Click settings icon (rightmost) to access:
+- **Pin Toolbar**: Keep toolbar visible or auto-hide on hover
+- **Hide All Annotations**: Toggle visibility of all annotations
+- **Document Properties**: View PDF metadata and info
+
+#### Saving Changes
+- Annotations are automatically tracked
+- Click Save button when ready
+- Desktop app only - browser mode can't save to disk
+- Changes are marked with asterisk in tab name (future feature)
+
+### Tips & Tricks
+
+1. **Multi-Document Workflow**: Open multiple PDFs in tabs for easy comparison
+2. **Keyboard Power User**: 
+   - Ctrl+F for search
+   - Ctrl+W to close tab
+   - Ctrl+Tab to switch tabs
+   - Esc to close any popup
+3. **Quick Navigation**: Use thumbnails sidebar for visual page jumping
+4. **Clean Workspace**: Unpin toolbar for distraction-free reading
+5. **Color Coding**: Use different highlight colors for different topics
+
+### Troubleshooting
+
+**PDF won't open:**
+- Ensure file is valid PDF
+- Check browser console for errors
+- Try in desktop app if using browser
+
+**Annotations not saving:**
+- Save feature only works in desktop app
+- Check file permissions
+- Make sure you clicked Save button
+
+**Performance issues:**
+- Large PDFs may take time to load
+- Thumbnails generation is intensive
+- Close unused tabs to free memory
+
+**Toolbar disappeared:**
+- If unpinned, hover near top to show
+- Re-pin in Settings if needed
+
+### Browser vs Desktop App
+
+**Browser Mode:**
+✅ View PDFs
+✅ Zoom and navigate
+✅ Create annotations
+✅ Search text
+✅ Table of contents
+❌ Save changes to disk
+❌ System print dialog
+❌ File system access
+
+**Desktop App (Electron):**
+✅ All browser features
+✅ Save changes to disk
+✅ System print dialog
+✅ File system integration
+✅ Better performance
+✅ Native look and feel
+
+### Architecture Overview
+
+The application is built with:
+- **PDF.js**: Mozilla's PDF rendering engine
+- **Vite**: Fast build tool and dev server
+- **Electron**: Desktop app wrapper
+- **Vanilla JavaScript**: No frameworks, pure ES6 modules
+
+Each module is independent:
+- `TabManager.js`: Multi-tab state management
+- `Toolbar.js`: All toolbar buttons and popovers
+- `Sidebar.js`: TOC and thumbnail sidebar
+- `PDFRenderer.js`: PDF.js integration and page rendering
+- `AnnotationManager.js`: Drawing and annotation tools
+- `SearchManager.js`: In-document search
+- `SettingsManager.js`: App preferences
+
+### Development
+
+**File Structure:**
+```
+src/
+├── icons/        # All toolbar icons (organized by group)
+├── js/           # JavaScript modules
+├── styles/       # CSS stylesheets
+└── main.js       # App entry point
+
+electron/
+├── main.js       # Electron main process
+└── preload.js    # Electron preload (IPC bridge)
+
+index.html        # Main HTML structure
+vite.config.js    # Vite configuration
+```
+
+**Adding Features:**
+1. Create new module in `src/js/`
+2. Import in `src/main.js`
+3. Initialize in PDFEditor constructor
+4. Add UI elements in `index.html`
+5. Style in `src/styles/main.css`
+
+### Known Limitations
+
+- No form filling support (yet)
+- No digital signature support (yet)
+- Basic search (no regex or advanced options)
+- Annotations are canvas-based (not embedded in PDF)
+- Two-page view is simple side-by-side
+- No bookmark management
+- No PDF merge/split tools
+
+### Future Enhancements Roadmap
+
+1. Form filling and submission
+2. Digital signatures
+3. Advanced search with regex
+4. Annotation comments and replies
+5. Bookmarks management
+6. Page manipulation (add, delete, reorder)
+7. PDF merge and split
+8. Custom stamp tools
+9. Measurement tools
+10. Redaction tools
+
+---
+
+**Built with ❤️ following the exact specifications.**
+**No cloud. No tracking. Just pure desktop PDF editing.**

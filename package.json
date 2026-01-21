@@ -1,0 +1,23 @@
+{
+  "name": "pdf-editor",
+  "version": "1.0.0",
+  "description": "Desktop PDF Editor with Electron",
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron": "electron .",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^28.1.0",
+    "vite": "^5.0.10",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^4.0.379"
+  }
+}

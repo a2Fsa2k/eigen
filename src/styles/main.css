@@ -587,17 +587,16 @@ body.dark-mode .pdf-container {
   pointer-events: auto;
   user-select: text;
   background: none !important;
-  /* No opacity, no transform, no zoom! */
 }
 
 .text-layer span {
-  color: transparent !important;
   background: none !important;
   text-shadow: none !important;
   user-select: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
+  white-space: pre;
+  line-height: 1;
+  padding: 1px 0;
+  margin: 0;
 }
 
 .annotation-layer {
@@ -1055,4 +1054,13 @@ body.dark-mode .highlight-popover .color-swatch.selected {
 }
 body.dark-mode .highlight-popover .divider {
   background: #222;
+}
+
+.text-layer span::selection {
+  background: #cce6ff80 !important;
+  border-radius: 3px;
+}
+.text-layer span::-moz-selection {
+  background: #cce6ff80 !important;
+  border-radius: 3px;
 }

@@ -100,31 +100,27 @@ export class PDFRenderer {
       viewport: viewport
     }).promise;
 
-    // Add text layer
+    // Add text layer (custom, minimal, NO PDF.js helpers)
     const textLayerDiv = document.createElement('div');
     textLayerDiv.className = 'text-layer';
     textLayerDiv.style.width = `${viewport.width}px`;
     textLayerDiv.style.height = `${viewport.height}px`;
     try {
       const textContent = await page.getTextContent();
-      // Use PDF.js text layer renderer (new API or fallback)
-      if (pdfjsLib.renderTextLayer) {
-        await pdfjsLib.renderTextLayer({
-          textContent,
-          container: textLayerDiv,
-          viewport,
-          textDivs: [],
-          enhanceTextSelection: true
-        });
-      } else {
-        // Fallback for older PDF.js
-        const textLayer = new pdfjsLib.TextLayer({
-          textContentSource: textContent,
-          container: textLayerDiv,
-          viewport: viewport
-        });
-        await textLayer.render();
-      }
+      textContent.items.forEach(item => {
+        const span = document.createElement('span');
+        // Use PDF.js Util to get transform for each text item
+        const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+        span.style.position = 'absolute';
+        span.style.left = `${tx[4]}px`;
+        span.style.top = `${tx[5] - item.height}px`;
+        span.style.fontSize = `${item.height}px`;
+        span.style.fontFamily = item.fontName;
+        span.textContent = item.str;
+        span.style.color = 'transparent';
+        span.style.whiteSpace = 'pre';
+        textLayerDiv.appendChild(span);
+      });
     } catch (e) {
       console.error('Error rendering text layer:', e);
     }

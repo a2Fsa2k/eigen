@@ -122,8 +122,14 @@ export class SearchManager {
     // Navigate to page
     this.app.pdfRenderer.goToPage(activeTab.id, result.page);
 
-    // Highlight text (simplified - would need more complex implementation for accurate highlighting)
+    // Clear previous selection highlighting
+    this.clearSelectionHighlight();
+    
+    // Highlight all occurrences on this page
     this.highlightTextInPage(result.page);
+    
+    // Add selection highlight to current result
+    this.addSelectionHighlight(result.page);
   }
 
   highlightTextInPage(pageNum) {
@@ -139,8 +145,42 @@ export class SearchManager {
     const textSpans = textLayer.querySelectorAll('span');
     textSpans.forEach(span => {
       if (span.textContent.toLowerCase().includes(query)) {
-        span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+        span.style.backgroundColor = 'rgba(255, 255, 0, 0.4)';
+        span.classList.add('search-highlight');
       }
+    });
+  }
+
+  addSelectionHighlight(pageNum) {
+    const query = this.searchInput.value.trim().toLowerCase();
+    if (!query) return;
+
+    const pageContainer = document.querySelector(`.page-container[data-page="${pageNum}"]`);
+    if (!pageContainer) return;
+
+    const textLayer = pageContainer.querySelector('.text-layer');
+    if (!textLayer) return;
+
+    const textSpans = textLayer.querySelectorAll('span.search-highlight');
+    
+    // Find the first matching span and add selection highlight
+    for (const span of textSpans) {
+      if (span.textContent.toLowerCase().includes(query)) {
+        span.style.backgroundColor = 'rgba(255, 165, 0, 0.6)';
+        span.classList.add('search-selected');
+        
+        // Scroll to the selected result
+        span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        break;
+      }
+    }
+  }
+
+  clearSelectionHighlight() {
+    const selectedSpans = document.querySelectorAll('.text-layer span.search-selected');
+    selectedSpans.forEach(span => {
+      span.style.backgroundColor = 'rgba(255, 255, 0, 0.4)';
+      span.classList.remove('search-selected');
     });
   }
 
@@ -148,6 +188,7 @@ export class SearchManager {
     const textSpans = document.querySelectorAll('.text-layer span');
     textSpans.forEach(span => {
       span.style.backgroundColor = '';
+      span.classList.remove('search-highlight', 'search-selected');
     });
   }
 

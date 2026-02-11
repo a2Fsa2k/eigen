@@ -81,31 +81,6 @@ class PDFEditor {
         });
       }
     });
-
-    // Toolbar hover for unpinned mode
-    const toolbar = document.getElementById('toolbar');
-    const contentArea = document.querySelector('.content-area');
-    
-    let toolbarHoverTimeout;
-    
-    contentArea.addEventListener('mouseenter', (e) => {
-      if (!this.settingsManager.isPinnedToolbar() && e.clientY < 80) {
-        toolbar.classList.remove('hidden');
-      }
-    });
-
-    contentArea.addEventListener('mousemove', (e) => {
-      if (!this.settingsManager.isPinnedToolbar()) {
-        if (e.clientY < 80) {
-          toolbar.classList.remove('hidden');
-          clearTimeout(toolbarHoverTimeout);
-        } else {
-          toolbarHoverTimeout = setTimeout(() => {
-            toolbar.classList.add('hidden');
-          }, 300);
-        }
-      }
-    });
   }
 
   setupKeyboardShortcuts() {

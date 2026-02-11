@@ -306,6 +306,27 @@ body.dark-mode .toolbar-btn.active {
   content: none;
 }
 
+/* Save button saved state - appears dull when no changes */
+#btn-save.saved {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: not-allowed;
+  filter: grayscale(100%);
+}
+
+#btn-save.saved img {
+  opacity: 0.3;
+}
+
+body.dark-mode #btn-save.saved {
+  opacity: 0.25;
+  filter: grayscale(100%) brightness(0.7);
+}
+
+body.dark-mode #btn-save.saved img {
+  opacity: 0.3;
+}
+
 .toolbar-divider {
   width: 1px;
   height: 24px;
@@ -613,14 +634,20 @@ body.dark-mode .pdf-container {
 }
 
 .two-page-layout {
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 20px !important;
 }
 
 .two-page-layout .page-container {
-  display: inline-block;
-  margin: 10px;
+  display: inline-block !important;
+  margin: 10px !important;
   vertical-align: top;
+  flex: 0 0 auto;
+  max-width: calc(50% - 30px);
 }
 
 /* Popovers */
@@ -847,6 +874,216 @@ body.dark-mode .search-bar button:hover {
   white-space: nowrap;
 }
 
+/* Document Properties Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.modal-content {
+  background: var(--toolbar-bg-light);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body.dark-mode .modal-content {
+  background: var(--toolbar-bg-dark);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+body.dark-mode .modal-header {
+  border-bottom-color: var(--border-dark);
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+}
+
+body.dark-mode .modal-close {
+  color: var(--text-dark);
+}
+
+.modal-close:hover {
+  background: var(--hover-light);
+}
+
+body.dark-mode .modal-close:hover {
+  background: var(--hover-dark);
+}
+
+.modal-body {
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+body.dark-mode .modal-footer {
+  border-top-color: var(--border-dark);
+}
+
+.btn-primary {
+  padding: 8px 24px;
+  border: none;
+  background: #0066cc;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background: #0052a3;
+}
+
+/* Document Properties Tabs */
+.properties-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-light);
+  padding: 0 20px;
+}
+
+body.dark-mode .properties-tabs {
+  border-bottom-color: var(--border-dark);
+}
+
+.prop-tab {
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+body.dark-mode .prop-tab {
+  color: #aaa;
+}
+
+.prop-tab:hover {
+  color: var(--text-light);
+}
+
+body.dark-mode .prop-tab:hover {
+  color: var(--text-dark);
+}
+
+.prop-tab.active {
+  color: #0066cc;
+  border-bottom-color: #0066cc;
+}
+
+/* Properties Content */
+.properties-content {
+  padding: 20px;
+}
+
+.prop-panel {
+  display: none;
+}
+
+.prop-panel.active {
+  display: block;
+}
+
+.prop-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 13px;
+  align-items: start;
+}
+
+.prop-row label {
+  font-weight: 500;
+  color: #666;
+}
+
+body.dark-mode .prop-row label {
+  color: #aaa;
+}
+
+.prop-row span {
+  color: var(--text-light);
+  word-break: break-word;
+}
+
+body.dark-mode .prop-row span {
+  color: var(--text-dark);
+}
+
+.prop-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 8px 0;
+}
+
+body.dark-mode .prop-divider {
+  background: var(--border-dark);
+}
+
+.fonts-list {
+  font-size: 13px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.fonts-list p {
+  margin-bottom: 8px;
+  color: #666;
+}
+
+body.dark-mode .fonts-list p {
+  color: #aaa;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 12px;
@@ -880,29 +1117,37 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
 
 /* Highlight Options Popover */
 .highlight-popover {
-  background: #232323;
-  border-radius: 12px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.32);
-  min-width: 260px;
-  max-width: 260px;
-  padding: 18px 20px 14px 20px;
-  color: #fff;
-  z-index: 1100;
+  position: fixed;
+  background: #2a2a2a;
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: none;
+  min-width: 240px;
+  color: #e0e0e0;
+}
+
+.highlight-popover.open {
+  display: block;
 }
 
 .highlight-popover .popover-section-title {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 10px;
-  text-align: left;
-  letter-spacing: 0;
+  display: block;
+  color: #e0e0e0;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .highlight-popover .color-swatch-row {
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
-  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .highlight-popover .color-swatch {
@@ -910,15 +1155,20 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
   height: 32px;
   border-radius: 50%;
   border: 2px solid transparent;
-  box-sizing: border-box;
   cursor: pointer;
-  transition: box-shadow 0.1s, border-color 0.1s, transform 0.1s;
-  background-clip: padding-box;
+  transition: all 0.2s;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.highlight-popover .color-swatch:hover {
+  transform: scale(1.1);
+  border-color: #888;
 }
 
 .highlight-popover .color-swatch.selected {
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 2px #444;
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.3);
 }
 
 .highlight-popover .highlight-stroke-preview {
@@ -938,16 +1188,17 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
 }
 
 .highlight-popover .thickness-section {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .highlight-popover .thickness-label-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  display: block;
+  color: #e0e0e0;
+  font-size: 12px;
   font-weight: 500;
   margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .highlight-popover .info-icon {
@@ -964,29 +1215,46 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
 }
 
 .highlight-popover .thickness-slider {
-  flex: 1;
-  accent-color: #fff176;
-  height: 2px;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #444;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  accent-color: #4a9eff;
 }
 
 .highlight-popover .thickness-slider::-webkit-slider-thumb {
-  width: 18px;
-  height: 18px;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: #fff;
-  border: 2px solid #bbb;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  background: #4a9eff;
   cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.highlight-popover .thickness-slider::-webkit-slider-thumb:hover {
+  background: #6ab0ff;
+  transform: scale(1.1);
 }
 
 .highlight-popover .thickness-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: #fff;
-  border: 2px solid #bbb;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  background: #4a9eff;
   cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.highlight-popover .thickness-slider::-moz-range-thumb:hover {
+  background: #6ab0ff;
+  transform: scale(1.1);
 }
 
 .highlight-popover .thickness-slider-labels {
@@ -999,18 +1267,20 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
 
 .highlight-popover .divider {
   height: 1px;
-  background: #353535;
+  background: #555;
   border: none;
-  margin: 0 0 18px 0;
-  opacity: 0.5;
+  margin: 16px 0;
 }
 
 .highlight-popover .toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #e0e0e0;
 }
 
 .highlight-popover .toggle-switch {
@@ -1025,7 +1295,7 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
 }
 
 .highlight-popover .toggle-switch.on {
-  background: #fff176;
+  background: #4a9eff;
 }
 
 .highlight-popover .toggle-knob {
@@ -1063,4 +1333,471 @@ body.dark-mode .highlight-popover .divider {
 .text-layer span::-moz-selection {
   background: #cce6ff80 !important;
   border-radius: 3px;
+}
+
+/* Draw Tool Dropdown */
+.draw-tool-dropdown {
+  position: fixed;
+  background: #2a2a2a;
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: none;
+  min-width: 240px;
+}
+
+.draw-tool-dropdown.open {
+  display: block;
+}
+
+.draw-tool-section {
+  margin-bottom: 16px;
+}
+
+.draw-tool-section:last-child {
+  margin-bottom: 0;
+}
+
+.draw-tool-label {
+  display: block;
+  color: #e0e0e0;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Color Palette */
+.color-palette {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+  border-color: #888;
+}
+
+.color-swatch.active {
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.3);
+}
+
+.color-swatch:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+/* Thickness Slider */
+.draw-tool-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #444;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.draw-tool-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4a9eff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.draw-tool-slider::-webkit-slider-thumb:hover {
+  background: #6ab0ff;
+  transform: scale(1.1);
+}
+
+.draw-tool-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4a9eff;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.draw-tool-slider::-moz-range-thumb:hover {
+  background: #6ab0ff;
+  transform: scale(1.1);
+}
+
+/* Preview Canvas */
+.draw-preview-canvas {
+  width: 100%;
+  height: 60px;
+  border-radius: 4px;
+  display: block;
+  border: 1px solid #444;
+}
+
+/* Draw Overlay Canvas - sits on top of PDF */
+.draw-overlay-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto !important;
+  z-index: 10;
+}
+
+/* Disable text selection when draw tool is active */
+body.draw-tool-active {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+body.draw-tool-active .text-layer {
+  pointer-events: none !important;
+}
+
+/* Enable pointer events on annotation layer when draw tool is active */
+body.draw-tool-active .annotation-layer {
+  pointer-events: auto !important;
+}
+
+body.draw-tool-active #pdf-container {
+  cursor: crosshair !important;
+}
+
+/* Eraser Tool Active State */
+body.eraser-tool-active {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+body.eraser-tool-active .text-layer {
+  pointer-events: none !important;
+}
+
+/* Enable pointer events on annotation layer when eraser tool is active */
+body.eraser-tool-active .annotation-layer {
+  pointer-events: auto !important;
+}
+
+body.eraser-tool-active #pdf-container {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="red" stroke-width="2" stroke-dasharray="3 2"/></svg>') 12 12, crosshair !important;
+}
+
+/* Highlight Tool Active State */
+body.highlight-tool-active .annotation-layer {
+  pointer-events: none !important;
+}
+
+body.highlight-tool-active .text-layer {
+  pointer-events: auto !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  z-index: 5;
+}
+
+/* When text-only mode is active, enable text selection */
+body.highlight-tool-active.text-only-mode .text-layer {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  pointer-events: auto !important;
+  z-index: 15 !important;
+}
+
+body.highlight-tool-active.text-only-mode .annotation-layer {
+  z-index: 10 !important;
+  pointer-events: none !important;
+}
+
+/* ==================== Text Tool Toolbar ==================== */
+.text-tool-toolbar {
+  position: fixed;
+  background: linear-gradient(180deg, #2a2a2a 0%, #1e1e1e 100%);
+  border: 1px solid #404040;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  pointer-events: none;
+}
+
+.text-tool-toolbar.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.text-tool-section {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  position: relative;
+}
+
+.text-tool-divider {
+  width: 1px;
+  height: 24px;
+  background: #404040;
+}
+
+/* Color button and dropdown */
+.text-tool-color-btn {
+  position: relative;
+}
+
+.color-preview {
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  border: 2px solid #555;
+}
+
+.text-tool-color-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #2a2a2a;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  padding: 4px;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 10001;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.text-tool-color-dropdown.visible {
+  display: flex;
+}
+
+.color-option {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid #555;
+  transition: all 0.2s;
+}
+
+.color-option:hover {
+  border-color: #4a9eff;
+  transform: scale(1.1);
+}
+
+/* Format buttons */
+.text-tool-btn {
+  background: #333;
+  color: #ddd;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-tool-btn:hover {
+  background: #3a3a3a;
+  border-color: #666;
+}
+
+.text-tool-btn.active {
+  background: #4a9eff;
+  border-color: #4a9eff;
+  color: #fff;
+}
+
+/* Size and spacing buttons */
+.text-tool-size-increase,
+.text-tool-size-decrease,
+.text-tool-spacing-increase,
+.text-tool-spacing-decrease {
+  font-size: 12px;
+  min-width: 36px;
+}
+
+/* Delete button */
+.text-tool-delete {
+  background: #d9534f;
+  border-color: #d43f3a;
+}
+
+.text-tool-delete:hover {
+  background: #c9302c;
+  border-color: #ac2925;
+}
+
+/* Text Annotation Wrapper */
+.text-annotation-wrapper {
+  position: absolute;
+  display: flex;
+  align-items: stretch;
+  min-width: 100px;
+  max-width: 600px;
+  z-index: 100;
+}
+
+/* Drag Handle (left side) */
+.text-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  background: rgba(200, 200, 200, 0.3);
+  border: 1px solid transparent;
+  border-radius: 2px 0 0 2px;
+  cursor: grab;
+  user-select: none;
+  color: #666;
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px;
+  opacity: 0;
+  transition: all 0.2s;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: -2px;
+}
+
+.text-annotation-wrapper:hover .text-drag-handle,
+.text-annotation-wrapper:has(.text-annotation:focus) .text-drag-handle,
+.text-annotation-wrapper:has(.text-annotation:empty) .text-drag-handle {
+  opacity: 1;
+  background: rgba(200, 200, 200, 0.5);
+}
+
+.text-drag-handle:hover {
+  background: rgba(180, 180, 180, 0.7);
+  border-color: #999;
+}
+
+.text-drag-handle:active {
+  cursor: grabbing;
+  background: rgba(160, 160, 160, 0.8);
+}
+
+/* Resize Handle (right side) */
+.text-resize-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  background: rgba(200, 200, 200, 0.3);
+  border: 1px solid transparent;
+  border-radius: 0 2px 2px 0;
+  cursor: ew-resize;
+  user-select: none;
+  color: #666;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px;
+  opacity: 0;
+  transition: all 0.2s;
+  writing-mode: vertical-rl;
+}
+
+.text-annotation-wrapper:hover .text-resize-handle,
+.text-annotation-wrapper:has(.text-annotation:focus) .text-resize-handle,
+.text-annotation-wrapper:has(.text-annotation:empty) .text-resize-handle {
+  opacity: 1;
+  background: rgba(200, 200, 200, 0.5);
+}
+
+.text-resize-handle:hover {
+  background: rgba(180, 180, 180, 0.7);
+  border-color: #999;
+}
+
+.text-resize-handle:active {
+  background: rgba(160, 160, 160, 0.8);
+}
+
+/* Text Annotation Box */
+.text-annotation {
+  flex: 1;
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  pointer-events: all;
+  cursor: text;
+  transition: all 0.2s;
+}
+
+/* Show box only when focused (while typing) */
+.text-annotation:focus {
+  border: 1px solid #4a9eff;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+}
+
+/* Show box when empty (to show placeholder) */
+.text-annotation:empty {
+  border: 1px solid #ccc;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.text-annotation:empty:before {
+  content: attr(data-placeholder);
+  color: #999;
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* Text Tool Active State */
+body.text-tool-active {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+body.text-tool-active .text-layer {
+  pointer-events: none !important;
+}
+
+body.text-tool-active .annotation-layer {
+  pointer-events: auto !important;
+}
+
+body.text-tool-active #pdf-container {
+  cursor: text !important;
 }

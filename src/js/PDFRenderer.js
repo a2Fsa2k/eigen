@@ -45,17 +45,37 @@ export class PDFRenderer {
     const tab = this.app.tabManager.getTab(tabId);
     if (!tab) return;
 
+    console.log('renderDocument called:', { tabId, pageLayout: tab.pageLayout });
+
     this.viewer.innerHTML = '';
     const pages = [];
 
-    const numPages = tab.pageLayout === 'two-page' ? doc.numPages : doc.numPages;
+    const pageLayout = tab.pageLayout || 'single';
     
-    if (tab.pageLayout === 'two-page') {
+    console.log('Applying page layout:', pageLayout);
+    
+    // Apply layout class
+    if (pageLayout === 'two-page') {
       this.viewer.classList.add('two-page-layout');
+      // Explicitly set flex properties for two-page layout
+      this.viewer.style.display = 'flex';
+      this.viewer.style.flexDirection = 'row';
+      this.viewer.style.flexWrap = 'wrap';
+      this.viewer.style.justifyContent = 'center';
+      this.viewer.style.alignItems = 'flex-start';
+      this.viewer.style.gap = '20px';
     } else {
       this.viewer.classList.remove('two-page-layout');
+      // Reset to single page (column) layout
+      this.viewer.style.display = 'flex';
+      this.viewer.style.flexDirection = 'column';
+      this.viewer.style.flexWrap = 'nowrap';
+      this.viewer.style.alignItems = 'center';
+      this.viewer.style.justifyContent = 'flex-start';
+      this.viewer.style.gap = '0';
     }
 
+    // Render pages
     for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
       const pageContainer = await this.createPageContainer(doc, pageNum, tabId);
       pages.push(pageContainer);
@@ -202,6 +222,7 @@ export class PDFRenderer {
   }
 
   async setPageLayout(tabId, layout) {
+    console.log('setPageLayout called:', { tabId, layout });
     await this.renderDocument(tabId);
   }
 

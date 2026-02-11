@@ -15,6 +15,16 @@ export class Toolbar {
     this.setupPageNavigation();
     this.setupViewControls();
     this.setupFileButtons();
+    
+    // Initialize save button to saved state (no changes initially)
+    setTimeout(() => {
+      const saveBtn = document.getElementById('btn-save');
+      if (saveBtn) {
+        saveBtn.classList.add('saved');
+        console.log('Save button initialized with saved state');
+      }
+    }, 100);
+    
     // REMOVE: this.setupPopovers();
     // Popover setup will be called after all managers are initialized
     if (!popoverClickHandlerRegistered) {
@@ -31,6 +41,17 @@ export class Toolbar {
         }
       });
       popoverClickHandlerRegistered = true;
+    }
+  }
+
+  /**
+   * Mark save button as having unsaved changes
+   */
+  markUnsavedChanges() {
+    const saveBtn = document.getElementById('btn-save');
+    if (saveBtn) {
+      saveBtn.classList.remove('saved');
+      console.log('Save button marked as having unsaved changes');
     }
   }
 
@@ -56,9 +77,11 @@ export class Toolbar {
       this.activateTool('draw');
     });
 
-    // Draw arrow - opens popover
+    // Draw arrow - opens new dropdown
     document.getElementById('btn-draw-arrow').addEventListener('click', (e) => {
-      this.togglePopover('draw', e.target);
+      e.stopPropagation();
+      const button = e.target.closest('.toolbar-btn-arrow') || e.target;
+      this.app.annotationManager.toggleDrawToolDropdown(button);
     });
 
     // Erase button (no dropdown)
@@ -176,6 +199,7 @@ export class Toolbar {
 
   setupViewControls() {
     document.getElementById('btn-page-layout').addEventListener('click', (e) => {
+      console.log('Page layout button clicked');
       this.togglePopover('page-layout', e.target);
     });
   }
@@ -213,12 +237,19 @@ export class Toolbar {
     const activeTab = this.app.tabManager.getActiveTab();
     if (!activeTab || !activeTab.hasChanges) return;
 
+    const saveBtn = document.getElementById('btn-save');
+    
     if (window.electronAPI && activeTab.path) {
       const pdfData = await this.app.pdfRenderer.exportPDF(activeTab.id);
       const result = await window.electronAPI.savePdf(activeTab.path, pdfData);
       
       if (result.success) {
         this.app.tabManager.updateTab(activeTab.id, { hasChanges: false });
+        
+        // Add 'saved' class to make button appear dull
+        saveBtn.classList.add('saved');
+        console.log('Save button marked as saved (dull)');
+        
         alert('File saved successfully');
       } else {
         alert('Error saving file: ' + result.error);
@@ -374,14 +405,19 @@ export class Toolbar {
     const popover = document.getElementById('popover-page-layout');
     const options = popover.querySelectorAll('.layout-option');
 
+    console.log('Setting up page layout popover', { popover, options: options.length });
+
     options.forEach(option => {
       option.addEventListener('click', () => {
         const layout = option.dataset.layout;
+        console.log('Layout option clicked:', layout);
+        
         options.forEach(o => o.classList.remove('active'));
         option.classList.add('active');
         
         const activeTab = this.app.tabManager.getActiveTab();
         if (activeTab) {
+          console.log('Setting layout for tab:', activeTab.id, layout);
           this.app.tabManager.updateTab(activeTab.id, { pageLayout: layout });
           this.app.pdfRenderer.setPageLayout(activeTab.id, layout);
         }
@@ -396,17 +432,12 @@ export class Toolbar {
 
   setupSettingsPopover() {
     const darkModeCheckbox = document.getElementById('setting-dark-mode');
-    const pinToolbarCheckbox = document.getElementById('setting-pin-toolbar');
     const hideAnnotationsCheckbox = document.getElementById('setting-hide-annotations');
     const docPropertiesBtn = document.getElementById('btn-doc-properties');
 
     darkModeCheckbox.addEventListener('change', () => {
       const theme = darkModeCheckbox.checked ? 'dark' : 'light';
       this.app.settingsManager.setTheme(theme);
-    });
-
-    pinToolbarCheckbox.addEventListener('change', () => {
-      this.app.settingsManager.setPinToolbar(pinToolbarCheckbox.checked);
     });
 
     hideAnnotationsCheckbox.addEventListener('change', () => {
@@ -416,6 +447,49 @@ export class Toolbar {
     docPropertiesBtn.addEventListener('click', () => {
       this.app.settingsManager.showDocumentProperties();
       this.closeAllPopovers();
+    });
+
+    // Setup modal controls
+    this.setupDocumentPropertiesModal();
+  }
+
+  setupDocumentPropertiesModal() {
+    const modal = document.getElementById('doc-properties-modal');
+    const closeBtn = document.getElementById('doc-properties-close');
+    const okBtn = document.getElementById('doc-properties-ok');
+    const tabs = document.querySelectorAll('.prop-tab');
+    const panels = document.querySelectorAll('.prop-panel');
+
+    // Close modal handlers
+    const closeModal = () => {
+      modal.style.display = 'none';
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    okBtn.addEventListener('click', closeModal);
+
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    // Tab switching
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+        
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        panels.forEach(panel => {
+          panel.classList.remove('active');
+          if (panel.id === `prop-${targetTab}`) {
+            panel.classList.add('active');
+          }
+        });
+      });
     });
   }
 
@@ -455,6 +529,12 @@ export class Toolbar {
     document.querySelectorAll('.popover').forEach(p => {
       p.style.display = 'none';
     });
+    
+    // Also close draw and highlight dropdowns
+    document.querySelectorAll('.draw-tool-dropdown, .highlight-popover').forEach(d => {
+      d.classList.remove('open');
+    });
+    
     this.activePopover = null;
   }
 

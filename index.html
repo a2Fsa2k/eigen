@@ -37,9 +37,11 @@
             <span>▼</span>
           </button>
         </div>
-        <button class="toolbar-btn tool-btn" id="btn-erase" title="Erase" data-tool="erase">
-          <img src="/src/icons/left/4_tool_erase.png" alt="Erase" />
-        </button>
+        <div class="toolbar-btn-group">
+          <button class="toolbar-btn tool-btn" id="btn-erase" title="Erase" data-tool="erase">
+            <img src="/src/icons/left/4_tool_erase.png" alt="Erase" />
+          </button>
+        </div>
         <div class="toolbar-divider"></div>
         <button class="toolbar-btn tool-btn" id="btn-text" title="Text" data-tool="text">
           <img src="/src/icons/left/5_tool_text.png" alt="Text" />
@@ -75,12 +77,14 @@
         <button class="toolbar-btn" id="btn-search" title="Search (Ctrl+F)">
           <img src="/src/icons/right/11_doc_search.png" alt="Search" />
         </button>
+        <div class="toolbar-divider"></div>
         <button class="toolbar-btn" id="btn-print" title="Print">
           <img src="/src/icons/right/12_file_print.png" alt="Print" />
         </button>
         <button class="toolbar-btn" id="btn-save" title="Save">
           <img src="/src/icons/right/13_file_save.png" alt="Save" />
         </button>
+        <div class="toolbar-divider"></div>
         <button class="toolbar-btn" id="btn-fullscreen" title="Fullscreen">
           <img src="/src/icons/right/14_view_fullscreen.png" alt="Fullscreen" />
         </button>
@@ -173,12 +177,6 @@
       <div class="settings-divider"></div>
       <div class="settings-option">
         <label>
-          <input type="checkbox" id="setting-pin-toolbar" />
-          Pin Toolbar
-        </label>
-      </div>
-      <div class="settings-option">
-        <label>
           <input type="checkbox" id="setting-hide-annotations" />
           Hide All Annotations
         </label>
@@ -198,6 +196,117 @@
       <button id="search-next">↓</button>
       <span id="search-results">0 of 0</span>
       <button id="search-close">✕</button>
+    </div>
+
+    <!-- Document Properties Modal -->
+    <div id="doc-properties-modal" class="modal" style="display: none;">
+      <div class="modal-content doc-properties-content">
+        <div class="modal-header">
+          <h2>Document Properties</h2>
+          <button class="modal-close" id="doc-properties-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="properties-tabs">
+            <button class="prop-tab active" data-tab="description">Description</button>
+            <button class="prop-tab" data-tab="security">Security</button>
+            <button class="prop-tab" data-tab="fonts">Fonts</button>
+          </div>
+          <div class="properties-content">
+            <div class="prop-panel active" id="prop-description">
+              <div class="prop-row">
+                <label>File name:</label>
+                <span id="prop-filename">-</span>
+              </div>
+              <div class="prop-row">
+                <label>File location:</label>
+                <span id="prop-location">-</span>
+              </div>
+              <div class="prop-row">
+                <label>File size:</label>
+                <span id="prop-filesize">-</span>
+              </div>
+              <div class="prop-divider"></div>
+              <div class="prop-row">
+                <label>Title:</label>
+                <span id="prop-title">-</span>
+              </div>
+              <div class="prop-row">
+                <label>Author:</label>
+                <span id="prop-author">-</span>
+              </div>
+              <div class="prop-row">
+                <label>Subject:</label>
+                <span id="prop-subject">-</span>
+              </div>
+              <div class="prop-row">
+                <label>Keywords:</label>
+                <span id="prop-keywords">-</span>
+              </div>
+              <div class="prop-divider"></div>
+              <div class="prop-row">
+                <label>Creator:</label>
+                <span id="prop-creator">-</span>
+              </div>
+              <div class="prop-row">
+                <label>Producer:</label>
+                <span id="prop-producer">-</span>
+              </div>
+              <div class="prop-divider"></div>
+              <div class="prop-row">
+                <label>Created:</label>
+                <span id="prop-created">-</span>
+              </div>
+              <div class="prop-row">
+                <label>Modified:</label>
+                <span id="prop-modified">-</span>
+              </div>
+              <div class="prop-divider"></div>
+              <div class="prop-row">
+                <label>Application:</label>
+                <span id="prop-application">Eigen PDF Viewer</span>
+              </div>
+              <div class="prop-row">
+                <label>PDF version:</label>
+                <span id="prop-pdfversion">-</span>
+              </div>
+              <div class="prop-row">
+                <label>Page count:</label>
+                <span id="prop-pagecount">-</span>
+              </div>
+              <div class="prop-row">
+                <label>Page size:</label>
+                <span id="prop-pagesize">-</span>
+              </div>
+            </div>
+            <div class="prop-panel" id="prop-security">
+              <div class="prop-row">
+                <label>Security method:</label>
+                <span id="prop-security-method">No security</span>
+              </div>
+              <div class="prop-row">
+                <label>Printing:</label>
+                <span id="prop-printing">Allowed</span>
+              </div>
+              <div class="prop-row">
+                <label>Content copying:</label>
+                <span id="prop-copying">Allowed</span>
+              </div>
+              <div class="prop-row">
+                <label>Document assembly:</label>
+                <span id="prop-assembly">Allowed</span>
+              </div>
+            </div>
+            <div class="prop-panel" id="prop-fonts">
+              <div id="prop-fonts-list" class="fonts-list">
+                <p>Loading fonts information...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" id="doc-properties-ok">OK</button>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -163,15 +163,64 @@ export class PDFRenderer {
   switchToTab(tabId) {
     const doc = this.documents.get(tabId);
     if (!doc) {
-      this.viewer.innerHTML = '<div class="empty-state"><p>No document loaded</p></div>';
+      // Show empty state with open file button
+      this.viewer.innerHTML = `
+        <div class="empty-state">
+          <p>Open a PDF to get started</p>
+          <button id="btn-open-file" class="open-file-btn">Open File</button>
+        </div>
+      `;
+      
+      // Re-attach event listener for the open file button
+      const openFileBtn = document.getElementById('btn-open-file');
+      if (openFileBtn) {
+        openFileBtn.addEventListener('click', () => {
+          this.app.openFile();
+        });
+      }
       return;
     }
 
-    this.renderDocument(tabId);
-    
+    // Check if pages are already rendered for this tab
+    const existingPages = this.pageElements.get(tabId);
     const tab = this.app.tabManager.getTab(tabId);
-    if (tab && tab.scrollPosition) {
-      this.container.scrollTop = tab.scrollPosition;
+    
+    if (existingPages && existingPages.length > 0) {
+      // Pages already rendered, just show them
+      this.viewer.innerHTML = '';
+      existingPages.forEach(page => {
+        this.viewer.appendChild(page);
+      });
+      
+      // Apply layout class
+      const pageLayout = tab.pageLayout || 'single';
+      if (pageLayout === 'two-page') {
+        this.viewer.classList.add('two-page-layout');
+        this.viewer.style.display = 'flex';
+        this.viewer.style.flexDirection = 'row';
+        this.viewer.style.flexWrap = 'wrap';
+        this.viewer.style.justifyContent = 'center';
+        this.viewer.style.alignItems = 'flex-start';
+        this.viewer.style.gap = '20px';
+      } else {
+        this.viewer.classList.remove('two-page-layout');
+        this.viewer.style.display = 'flex';
+        this.viewer.style.flexDirection = 'column';
+        this.viewer.style.flexWrap = 'nowrap';
+        this.viewer.style.alignItems = 'center';
+        this.viewer.style.justifyContent = 'flex-start';
+        this.viewer.style.gap = '0';
+      }
+      
+      // Restore scroll position after a short delay to ensure DOM is ready
+      if (tab && tab.scrollPosition !== undefined) {
+        requestAnimationFrame(() => {
+          this.container.scrollTop = tab.scrollPosition;
+        });
+      }
+    } else {
+      // First time rendering this tab, render all pages
+      this.renderDocument(tabId);
     }
   }
 

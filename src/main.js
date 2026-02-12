@@ -39,6 +39,11 @@ class PDFEditor {
       this.openFile();
     });
 
+    // New tab button
+    document.getElementById('btn-new-tab').addEventListener('click', () => {
+      this.createNewTab();
+    });
+
     // Tab events
     this.tabManager.on('tabChanged', (tabId) => {
       this.onTabChanged(tabId);

@@ -64,7 +64,7 @@ body.dark-mode .tabs-bar {
   align-items: center;
   gap: 2px;
   padding: 0 4px;
-  min-width: 100%;
+  flex: 0 0 auto;
 }
 
 .tab {
@@ -136,6 +136,45 @@ body.dark-mode .tab-close {
 }
 
 body.dark-mode .tab-close:hover {
+  background: var(--active-dark);
+}
+
+/* New Tab Button */
+.new-tab-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--text-light);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 4px;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+body.dark-mode .new-tab-btn {
+  color: var(--text-dark);
+}
+
+.new-tab-btn:hover {
+  background: var(--hover-light);
+}
+
+body.dark-mode .new-tab-btn:hover {
+  background: var(--hover-dark);
+}
+
+.new-tab-btn:active {
+  background: var(--active-light);
+}
+
+body.dark-mode .new-tab-btn:active {
   background: var(--active-dark);
 }
 

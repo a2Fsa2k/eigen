@@ -229,6 +229,8 @@ class PDFEditor {
 
     const tab = this.tabManager.getTab(tabId);
     tab.fileData = new Uint8Array(file.data);
+    
+    console.log('loadPDF: Storing fileData, size:', tab.fileData.byteLength);
 
     await this.pdfRenderer.loadDocument(tab.fileData, tabId);
     // updateUI() is now called from loadDocument() right after the document is loaded

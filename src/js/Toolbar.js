@@ -239,6 +239,10 @@ export class Toolbar {
 
     const saveBtn = document.getElementById('btn-save');
     
+    console.log('save(): activeTab:', activeTab);
+    console.log('save(): fileData exists?', !!activeTab.fileData);
+    console.log('save(): fileData size:', activeTab.fileData ? activeTab.fileData.byteLength : 0);
+    
     try {
       const pdfBytes = await this.app.pdfRenderer.exportPDF(activeTab.id);
       
@@ -266,7 +270,7 @@ export class Toolbar {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = activeTab.filename || 'document.pdf';
+        a.download = activeTab.filename || activeTab.name || 'document.pdf';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

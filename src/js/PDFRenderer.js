@@ -337,15 +337,35 @@ export class PDFRenderer {
 
   async exportPDF(tabId) {
     const tab = this.app.tabManager.getTab(tabId);
-    if (!tab || !tab.fileData) return null;
+    if (!tab || !tab.fileData) {
+      console.error('No tab or fileData found for export');
+      return null;
+    }
 
     try {
       // Import pdf-lib dynamically
       const { PDFDocument, rgb } = await import('pdf-lib');
       
+      // Ensure fileData is a Uint8Array
+      let pdfData;
+      if (tab.fileData instanceof Uint8Array) {
+        pdfData = tab.fileData;
+      } else if (tab.fileData instanceof ArrayBuffer) {
+        pdfData = new Uint8Array(tab.fileData);
+      } else if (Array.isArray(tab.fileData)) {
+        pdfData = new Uint8Array(tab.fileData);
+      } else {
+        console.error('Invalid fileData format:', typeof tab.fileData);
+        return null;
+      }
+      
+      console.log('Loading PDF, data size:', pdfData.byteLength);
+      
       // Load the original PDF
-      const pdfDoc = await PDFDocument.load(tab.fileData);
+      const pdfDoc = await PDFDocument.load(pdfData);
       const pages = pdfDoc.getPages();
+      
+      console.log('PDF loaded, pages:', pages.length);
       
       // Get all annotations for this tab
       const drawPaths = this.app.annotationManager.drawPaths.get(tabId) || new Map();
@@ -418,6 +438,7 @@ export class PDFRenderer {
       
       // Save the PDF and return as Uint8Array
       const pdfBytes = await pdfDoc.save();
+      console.log('PDF saved, output size:', pdfBytes.byteLength);
       return pdfBytes; // Return Uint8Array directly
       
     } catch (error) {

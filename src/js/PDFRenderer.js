@@ -337,9 +337,40 @@ export class PDFRenderer {
 
   async exportPDF(tabId) {
     const tab = this.app.tabManager.getTab(tabId);
+    
+    console.log('exportPDF called for tab:', tabId);
+    console.log('Tab object:', tab);
+    console.log('fileData exists?', !!tab?.fileData);
+    console.log('fileData type:', tab?.fileData ? tab.fileData.constructor.name : 'undefined');
+    console.log('fileData size:', tab?.fileData ? tab.fileData.byteLength || tab.fileData.length : 0);
+    
     if (!tab || !tab.fileData) {
       console.error('No tab or fileData found for export');
       return null;
+    }
+
+    // Get all annotations for this tab
+    const drawPaths = this.app.annotationManager.drawPaths.get(tabId) || new Map();
+    const highlightPaths = this.app.annotationManager.highlightPaths.get(tabId) || new Map();
+    const highlights = this.app.annotationManager.highlights.get(tabId) || new Map();
+    
+    // Check if there are any annotations
+    const hasAnnotations = drawPaths.size > 0 || highlightPaths.size > 0 || highlights.size > 0;
+    
+    console.log('Has annotations?', hasAnnotations);
+    console.log('Draw paths:', drawPaths.size, 'Highlight paths:', highlightPaths.size, 'Highlights:', highlights.size);
+    
+    // If no annotations, just return the original file
+    if (!hasAnnotations) {
+      console.log('No annotations, returning original file');
+      if (tab.fileData instanceof Uint8Array) {
+        return tab.fileData;
+      } else if (tab.fileData instanceof ArrayBuffer) {
+        return new Uint8Array(tab.fileData);
+      } else if (Array.isArray(tab.fileData)) {
+        return new Uint8Array(tab.fileData);
+      }
+      return new Uint8Array(tab.fileData);
     }
 
     try {
@@ -366,11 +397,6 @@ export class PDFRenderer {
       const pages = pdfDoc.getPages();
       
       console.log('PDF loaded, pages:', pages.length);
-      
-      // Get all annotations for this tab
-      const drawPaths = this.app.annotationManager.drawPaths.get(tabId) || new Map();
-      const highlightPaths = this.app.annotationManager.highlightPaths.get(tabId) || new Map();
-      const highlights = this.app.annotationManager.highlights.get(tabId) || new Map();
       
       // Draw annotations on each page
       for (let pageNum = 1; pageNum <= pages.length; pageNum++) {

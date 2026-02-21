@@ -240,29 +240,18 @@ export class Toolbar {
     const saveBtn = document.getElementById('btn-save');
     
     try {
-      const pdfData = await this.app.pdfRenderer.exportPDF(activeTab.id);
+      const pdfBytes = await this.app.pdfRenderer.exportPDF(activeTab.id);
       
-      if (!pdfData) {
+      if (!pdfBytes) {
         alert('Error: Could not export PDF data');
         return;
       }
       
-      // Convert to Uint8Array if it's a regular array
-      let pdfBytes;
-      if (Array.isArray(pdfData)) {
-        pdfBytes = new Uint8Array(pdfData);
-      } else if (pdfData instanceof Uint8Array) {
-        pdfBytes = pdfData;
-      } else if (pdfData instanceof ArrayBuffer) {
-        pdfBytes = new Uint8Array(pdfData);
-      } else {
-        throw new Error('Invalid PDF data format');
-      }
-      
       // Check if running in Electron
       if (window.electronAPI && activeTab.path) {
-        // Convert to regular array for Electron IPC
-        const result = await window.electronAPI.savePdf(activeTab.path, Array.from(pdfBytes));
+        // Electron needs regular array for IPC
+        const pdfArray = Array.from(pdfBytes);
+        const result = await window.electronAPI.savePdf(activeTab.path, pdfArray);
         
         if (result.success) {
           this.app.tabManager.updateTab(activeTab.id, { hasChanges: false });
@@ -272,7 +261,7 @@ export class Toolbar {
           alert('Error saving file: ' + result.error);
         }
       } else {
-        // Web version - trigger download
+        // Web version - trigger download directly with Uint8Array
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

@@ -416,14 +416,21 @@ export class PDFRenderer {
         });
       }
       
-      // Save the PDF
+      // Save the PDF and return as Uint8Array
       const pdfBytes = await pdfDoc.save();
-      return Array.from(pdfBytes);
+      return pdfBytes; // Return Uint8Array directly
       
     } catch (error) {
       console.error('Error exporting PDF with annotations:', error);
-      // Fallback: return original data
-      return Array.from(tab.fileData);
+      // Fallback: return original data as Uint8Array
+      if (tab.fileData instanceof Uint8Array) {
+        return tab.fileData;
+      } else if (tab.fileData instanceof ArrayBuffer) {
+        return new Uint8Array(tab.fileData);
+      } else if (Array.isArray(tab.fileData)) {
+        return new Uint8Array(tab.fileData);
+      }
+      return new Uint8Array(tab.fileData);
     }
   }
   

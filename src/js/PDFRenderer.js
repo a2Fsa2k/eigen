@@ -336,11 +336,106 @@ export class PDFRenderer {
   }
 
   async exportPDF(tabId) {
-    // For now, just return the original data
-    // In a real implementation, this would include annotations
     const tab = this.app.tabManager.getTab(tabId);
     if (!tab || !tab.fileData) return null;
 
-    return Array.from(tab.fileData);
+    try {
+      // Import pdf-lib dynamically
+      const { PDFDocument, rgb } = await import('pdf-lib');
+      
+      // Load the original PDF
+      const pdfDoc = await PDFDocument.load(tab.fileData);
+      const pages = pdfDoc.getPages();
+      
+      // Get all annotations for this tab
+      const drawPaths = this.app.annotationManager.drawPaths.get(tabId) || new Map();
+      const highlightPaths = this.app.annotationManager.highlightPaths.get(tabId) || new Map();
+      const highlights = this.app.annotationManager.highlights.get(tabId) || new Map();
+      
+      // Draw annotations on each page
+      for (let pageNum = 1; pageNum <= pages.length; pageNum++) {
+        const page = pages[pageNum - 1];
+        const { width, height } = page.getSize();
+        
+        // Get the page element to extract scale
+        const pageElements = this.pageElements.get(tabId);
+        const pageElement = pageElements ? pageElements[pageNum - 1] : null;
+        const scale = tab.zoom || 1.0;
+        
+        // Draw paths for this page
+        const pagePaths = drawPaths.get(pageNum) || [];
+        pagePaths.forEach(path => {
+          // Convert canvas coordinates to PDF coordinates
+          const pdfPath = path.points.map(point => ({
+            x: (point.x / scale),
+            y: height - (point.y / scale) // Flip Y axis
+          }));
+          
+          // Draw lines between points
+          for (let i = 0; i < pdfPath.length - 1; i++) {
+            page.drawLine({
+              start: { x: pdfPath[i].x, y: pdfPath[i].y },
+              end: { x: pdfPath[i + 1].x, y: pdfPath[i + 1].y },
+              thickness: path.thickness / scale,
+              color: this.hexToRgb(path.color),
+              opacity: 1
+            });
+          }
+        });
+        
+        // Draw highlight paths for this page
+        const pageHighlights = highlightPaths.get(pageNum) || [];
+        pageHighlights.forEach(highlight => {
+          const pdfPath = highlight.points.map(point => ({
+            x: (point.x / scale),
+            y: height - (point.y / scale)
+          }));
+          
+          for (let i = 0; i < pdfPath.length - 1; i++) {
+            page.drawLine({
+              start: { x: pdfPath[i].x, y: pdfPath[i].y },
+              end: { x: pdfPath[i + 1].x, y: pdfPath[i + 1].y },
+              thickness: highlight.thickness / scale,
+              color: this.hexToRgb(highlight.color),
+              opacity: 0.4
+            });
+          }
+        });
+        
+        // Draw text-selection highlights for this page
+        const pageTextHighlights = highlights.get(pageNum) || [];
+        pageTextHighlights.forEach(highlight => {
+          page.drawRectangle({
+            x: highlight.x / scale,
+            y: height - (highlight.y + highlight.height) / scale,
+            width: highlight.width / scale,
+            height: highlight.height / scale,
+            color: this.hexToRgb(highlight.color),
+            opacity: 0.4
+          });
+        });
+      }
+      
+      // Save the PDF
+      const pdfBytes = await pdfDoc.save();
+      return Array.from(pdfBytes);
+      
+    } catch (error) {
+      console.error('Error exporting PDF with annotations:', error);
+      // Fallback: return original data
+      return Array.from(tab.fileData);
+    }
+  }
+  
+  /**
+   * Convert hex color to RGB for pdf-lib
+   */
+  hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? rgb(
+      parseInt(result[1], 16) / 255,
+      parseInt(result[2], 16) / 255,
+      parseInt(result[3], 16) / 255
+    ) : rgb(0, 0, 0);
   }
 }

@@ -235,25 +235,52 @@ export class Toolbar {
 
   async save() {
     const activeTab = this.app.tabManager.getActiveTab();
-    if (!activeTab || !activeTab.hasChanges) return;
+    if (!activeTab) return;
 
     const saveBtn = document.getElementById('btn-save');
     
-    if (window.electronAPI && activeTab.path) {
+    try {
       const pdfData = await this.app.pdfRenderer.exportPDF(activeTab.id);
-      const result = await window.electronAPI.savePdf(activeTab.path, pdfData);
       
-      if (result.success) {
-        this.app.tabManager.updateTab(activeTab.id, { hasChanges: false });
-        
-        // Add 'saved' class to make button appear dull
-        saveBtn.classList.add('saved');
-        console.log('Save button marked as saved (dull)');
-        
-        alert('File saved successfully');
-      } else {
-        alert('Error saving file: ' + result.error);
+      if (!pdfData) {
+        alert('Error: Could not export PDF data');
+        return;
       }
+      
+      // Check if running in Electron
+      if (window.electronAPI && activeTab.path) {
+        const result = await window.electronAPI.savePdf(activeTab.path, pdfData);
+        
+        if (result.success) {
+          this.app.tabManager.updateTab(activeTab.id, { hasChanges: false });
+          saveBtn.classList.add('saved');
+          alert('File saved successfully');
+        } else {
+          alert('Error saving file: ' + result.error);
+        }
+      } else {
+        // Web version - trigger download
+        const blob = new Blob([new Uint8Array(pdfData)], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = activeTab.filename || 'document.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // Mark as saved
+        if (activeTab.hasChanges) {
+          this.app.tabManager.updateTab(activeTab.id, { hasChanges: false });
+          saveBtn.classList.add('saved');
+        }
+        
+        console.log('PDF downloaded successfully');
+      }
+    } catch (error) {
+      console.error('Error saving PDF:', error);
+      alert('Error saving PDF: ' + error.message);
     }
   }
 

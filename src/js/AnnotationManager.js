@@ -290,6 +290,7 @@ export class AnnotationManager {
       if (rects.length > 0) {
         const { layer, tabId } = this.currentAnnotation;
         const pageNum = parseInt(layer.dataset.page);
+        const layerRect = layer.getBoundingClientRect(); // FIX: Get layer rect
         const canvas = layer.querySelector('canvas') || this.createHighlightCanvas(layer);
         const ctx = canvas.getContext('2d');
         

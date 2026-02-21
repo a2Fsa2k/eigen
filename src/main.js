@@ -5,6 +5,7 @@ import { PDFRenderer } from './js/PDFRenderer.js';
 import { AnnotationManager } from './js/AnnotationManager.js';
 import { SearchManager } from './js/SearchManager.js';
 import { SettingsManager } from './js/SettingsManager.js';
+import { TextSelectionManager } from './js/TextSelectionManager.js';
 
 class PDFEditor {
   constructor() {
@@ -15,6 +16,7 @@ class PDFEditor {
     this.annotationManager = new AnnotationManager(this);
     this.searchManager = new SearchManager(this);
     this.settingsManager = new SettingsManager(this);
+    this.textSelectionManager = new TextSelectionManager(this);
 
     this.init();
     this.toolbar.setupPopovers(); // <-- Call popover setup after all managers are initialized

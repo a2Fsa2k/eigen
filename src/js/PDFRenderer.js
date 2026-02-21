@@ -427,13 +427,16 @@ export class PDFRenderer {
             y: height - (point.y / scale) // Flip Y axis
           }));
           
+          // Get RGB color
+          const rgbColor = this.hexToRgbValues(path.color);
+          
           // Draw lines between points
           for (let i = 0; i < pdfPath.length - 1; i++) {
             page.drawLine({
               start: { x: pdfPath[i].x, y: pdfPath[i].y },
               end: { x: pdfPath[i + 1].x, y: pdfPath[i + 1].y },
               thickness: path.thickness / scale,
-              color: this.hexToRgb(path.color),
+              color: rgb(rgbColor.r, rgbColor.g, rgbColor.b),
               opacity: 1
             });
           }
@@ -447,12 +450,15 @@ export class PDFRenderer {
             y: height - (point.y / scale)
           }));
           
+          // Get RGB color
+          const rgbColor = this.hexToRgbValues(highlight.color);
+          
           for (let i = 0; i < pdfPath.length - 1; i++) {
             page.drawLine({
               start: { x: pdfPath[i].x, y: pdfPath[i].y },
               end: { x: pdfPath[i + 1].x, y: pdfPath[i + 1].y },
               thickness: highlight.thickness / scale,
-              color: this.hexToRgb(highlight.color),
+              color: rgb(rgbColor.r, rgbColor.g, rgbColor.b),
               opacity: 0.4
             });
           }
@@ -461,12 +467,15 @@ export class PDFRenderer {
         // Draw text-selection highlights for this page
         const pageTextHighlights = highlights.get(pageNum) || [];
         pageTextHighlights.forEach(highlight => {
+          // Get RGB color
+          const rgbColor = this.hexToRgbValues(highlight.color);
+          
           page.drawRectangle({
             x: highlight.x / scale,
             y: height - (highlight.y + highlight.height) / scale,
             width: highlight.width / scale,
             height: highlight.height / scale,
-            color: this.hexToRgb(highlight.color),
+            color: rgb(rgbColor.r, rgbColor.g, rgbColor.b),
             opacity: 0.4
           });
         });
@@ -492,14 +501,15 @@ export class PDFRenderer {
   }
   
   /**
-   * Convert hex color to RGB for pdf-lib
+   * Convert hex color to RGB object for pdf-lib
+   * Returns { r, g, b } with values 0-1
    */
-  hexToRgb(hex) {
+  hexToRgbValues(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? rgb(
-      parseInt(result[1], 16) / 255,
-      parseInt(result[2], 16) / 255,
-      parseInt(result[3], 16) / 255
-    ) : rgb(0, 0, 0);
+    return result ? {
+      r: parseInt(result[1], 16) / 255,
+      g: parseInt(result[2], 16) / 255,
+      b: parseInt(result[3], 16) / 255
+    } : { r: 0, g: 0, b: 0 };
   }
 }

@@ -247,9 +247,22 @@ export class Toolbar {
         return;
       }
       
+      // Convert to Uint8Array if it's a regular array
+      let pdfBytes;
+      if (Array.isArray(pdfData)) {
+        pdfBytes = new Uint8Array(pdfData);
+      } else if (pdfData instanceof Uint8Array) {
+        pdfBytes = pdfData;
+      } else if (pdfData instanceof ArrayBuffer) {
+        pdfBytes = new Uint8Array(pdfData);
+      } else {
+        throw new Error('Invalid PDF data format');
+      }
+      
       // Check if running in Electron
       if (window.electronAPI && activeTab.path) {
-        const result = await window.electronAPI.savePdf(activeTab.path, pdfData);
+        // Convert to regular array for Electron IPC
+        const result = await window.electronAPI.savePdf(activeTab.path, Array.from(pdfBytes));
         
         if (result.success) {
           this.app.tabManager.updateTab(activeTab.id, { hasChanges: false });
@@ -260,7 +273,7 @@ export class Toolbar {
         }
       } else {
         // Web version - trigger download
-        const blob = new Blob([new Uint8Array(pdfData)], { type: 'application/pdf' });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

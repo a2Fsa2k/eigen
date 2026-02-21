@@ -359,6 +359,14 @@ export class PDFRenderer {
     
     console.log('Has annotations?', hasAnnotations);
     console.log('Draw paths:', drawPaths.size, 'Highlight paths:', highlightPaths.size, 'Highlights:', highlights.size);
+    console.log('Draw paths Map:', drawPaths);
+    
+    // Count total paths across all pages
+    let totalDrawPaths = 0;
+    drawPaths.forEach((pagePaths) => {
+      totalDrawPaths += pagePaths.length;
+    });
+    console.log('Total draw paths across all pages:', totalDrawPaths);
     
     // If no annotations, just return the original file
     if (!hasAnnotations) {
@@ -410,7 +418,9 @@ export class PDFRenderer {
         
         // Draw paths for this page
         const pagePaths = drawPaths.get(pageNum) || [];
-        pagePaths.forEach(path => {
+        console.log(`Page ${pageNum}: Found ${pagePaths.length} draw paths`);
+        pagePaths.forEach((path, pathIndex) => {
+          console.log(`  Path ${pathIndex}:`, { points: path.points?.length, color: path.color, thickness: path.thickness });
           // Convert canvas coordinates to PDF coordinates
           const pdfPath = path.points.map(point => ({
             x: (point.x / scale),

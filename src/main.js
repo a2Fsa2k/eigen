@@ -230,8 +230,13 @@ class PDFEditor {
     const tab = this.tabManager.getTab(tabId);
     
     // Create a proper copy of the data to avoid detached buffer issues
+    // CRITICAL: We must create a NEW buffer with a copy of the data
+    // Otherwise the ArrayBuffer can become detached when the original is garbage collected
     const sourceData = Array.isArray(file.data) ? file.data : Array.from(new Uint8Array(file.data));
-    tab.fileData = new Uint8Array(sourceData);
+    const copiedBuffer = new ArrayBuffer(sourceData.length);
+    const copiedView = new Uint8Array(copiedBuffer);
+    copiedView.set(sourceData);
+    tab.fileData = copiedView;
     
     console.log('loadPDF: Storing fileData, size:', tab.fileData.byteLength);
 

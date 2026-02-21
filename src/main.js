@@ -230,17 +230,28 @@ class PDFEditor {
     const tab = this.tabManager.getTab(tabId);
     
     // Create a proper copy of the data to avoid detached buffer issues
-    // CRITICAL: We must create a NEW buffer with a copy of the data
-    // Otherwise the ArrayBuffer can become detached when the original is garbage collected
+    // CRITICAL: pdf.js will DETACH the ArrayBuffer we pass to it!
+    // We MUST create TWO separate copies: one for pdf.js, one for us to keep
     const sourceData = Array.isArray(file.data) ? file.data : Array.from(new Uint8Array(file.data));
-    const copiedBuffer = new ArrayBuffer(sourceData.length);
-    const copiedView = new Uint8Array(copiedBuffer);
-    copiedView.set(sourceData);
-    tab.fileData = copiedView;
+    
+    // Copy 1: For our storage (this one we keep forever)
+    const ourBuffer = new ArrayBuffer(sourceData.length);
+    const ourView = new Uint8Array(ourBuffer);
+    ourView.set(sourceData);
+    tab.fileData = ourView;
+    
+    // Copy 2: For pdf.js to consume (this one will get detached)
+    const pdfjsBuffer = new ArrayBuffer(sourceData.length);
+    const pdfjsView = new Uint8Array(pdfjsBuffer);
+    pdfjsView.set(sourceData);
     
     console.log('loadPDF: Storing fileData, size:', tab.fileData.byteLength);
 
-    await this.pdfRenderer.loadDocument(tab.fileData, tabId);
+    await this.pdfRenderer.loadDocument(pdfjsView, tabId);
+    
+    // Verify fileData is still intact after pdf.js loads it
+    console.log('loadPDF: After pdf.js load, fileData size:', tab.fileData.byteLength);
+    
     // updateUI() is now called from loadDocument() right after the document is loaded
   }
 

@@ -228,7 +228,10 @@ class PDFEditor {
     }
 
     const tab = this.tabManager.getTab(tabId);
-    tab.fileData = new Uint8Array(file.data);
+    
+    // Create a proper copy of the data to avoid detached buffer issues
+    const sourceData = Array.isArray(file.data) ? file.data : Array.from(new Uint8Array(file.data));
+    tab.fileData = new Uint8Array(sourceData);
     
     console.log('loadPDF: Storing fileData, size:', tab.fileData.byteLength);
 

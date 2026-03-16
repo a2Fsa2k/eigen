@@ -156,6 +156,13 @@ export class PDFRenderer {
     pageContainer.appendChild(canvas);
     pageContainer.appendChild(textLayerDiv);
     pageContainer.appendChild(annotationLayerDiv);
+    
+    // Restore annotations for this page after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      if (this.app.annotationManager) {
+        this.app.annotationManager.restorePageAnnotations(tabId, pageNum, annotationLayerDiv);
+      }
+    }, 50);
 
     return pageContainer;
   }

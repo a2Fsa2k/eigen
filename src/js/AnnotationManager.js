@@ -29,6 +29,16 @@ export class AnnotationManager {
     this.highlightThickness = 20;
     this.highlightTextOnly = false;
     
+    // Store ALL annotations by page number within a tab
+    // Structure: pageAnnotations.get(tabId) -> Map(pageNum -> { 
+    //   drawings: paths[], 
+    //   highlights: paths[],
+    //   textHighlights: highlights[],
+    //   texts: textBlocks[]
+    // })
+    this.pageAnnotations = new Map();
+    
+    // Legacy maps (will be maintained for backward compatibility or migrated to pageAnnotations)
     this.annotations = new Map(); // tabId -> annotations[]
     this.drawPaths = new Map(); // tabId -> pageNum -> paths[]
     this.highlightPaths = new Map(); // tabId -> pageNum -> highlight paths[]
@@ -157,10 +167,16 @@ export class AnnotationManager {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    console.log('Mouse coordinates:', { x, y, clientX: e.clientX, clientY: e.clientY });
+    // Scale coordinates by current zoom level so they are independent of zoom
+    const activeTabObj = this.app.tabManager.getTab(activeTab.id);
+    const zoom = activeTabObj ? (activeTabObj.zoom || 1.0) : 1.0;
+    const unscaledX = x / zoom;
+    const unscaledY = y / zoom;
+    
+    console.log('Mouse coordinates:', { x, y, unscaledX, unscaledY, clientX: e.clientX, clientY: e.clientY });
 
     if (this.activeTool === 'draw') {
-      this.startNewDrawing(annotationLayer, x, y, activeTab.id);
+      this.startNewDrawing(annotationLayer, x, y, activeTab.id, unscaledX, unscaledY);
     } else if (this.activeTool === 'highlight') {
       // For text-only mode, just track the annotation, text selection happens naturally
       if (this.highlightTextOnly) {
@@ -171,10 +187,10 @@ export class AnnotationManager {
         };
       } else {
         // Normal freehand highlight
-        this.startDrawing(annotationLayer, x, y, activeTab.id);
+        this.startDrawing(annotationLayer, x, y, activeTab.id, unscaledX, unscaledY);
       }
     } else if (this.activeTool === 'erase') {
-      this.startErasing(annotationLayer, x, y, activeTab.id);
+      this.startErasing(annotationLayer, x, y, activeTab.id, unscaledX, unscaledY);
     } else if (this.activeTool === 'text') {
       // Don't create a new text box if clicking on an existing text annotation
       if (!e.target.closest('.text-annotation')) {
@@ -186,7 +202,7 @@ export class AnnotationManager {
   /**
    * Start drawing with new DrawingEngine
    */
-  startNewDrawing(annotationLayer, x, y, tabId) {
+  startNewDrawing(annotationLayer, x, y, tabId, unscaledX, unscaledY) {
     // Get or create overlay canvas
     let canvas = annotationLayer.querySelector('.draw-overlay-canvas');
     if (!canvas) {
@@ -213,6 +229,13 @@ export class AnnotationManager {
     }
     
     this.drawingEngine.initCanvas(canvas);
+    
+    const activeTabObj = this.app.tabManager ? this.app.tabManager.getTab(tabId) : null;
+    const zoom = activeTabObj ? (activeTabObj.zoom || 1.0) : 1.0;
+
+    // Apply current stroke width taking zoom into account for DrawingEngine dynamically
+    this.drawToolState.setState({ thickness: this.drawThickness * zoom });
+
     this.drawingEngine.startDrawing(x, y);
     
     console.log('Drawing started at:', x, y, 'Canvas size:', canvas.width, canvas.height);
@@ -222,7 +245,9 @@ export class AnnotationManager {
       layer: annotationLayer,
       canvas: canvas,
       tabId: tabId,
-      pageNum: parseInt(annotationLayer.dataset.page)
+      pageNum: parseInt(annotationLayer.dataset.page),
+      pointsUnscaled: [{ x: unscaledX, y: unscaledY }],
+      thickness: this.drawThickness
     };
   }
 
@@ -246,15 +271,24 @@ export class AnnotationManager {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    const activeTab = this.app.tabManager.getActiveTab();
+    const activeTabObj = activeTab ? this.app.tabManager.getTab(activeTab.id) : null;
+    const zoom = activeTabObj ? (activeTabObj.zoom || 1.0) : 1.0;
+    const unscaledX = x / zoom;
+    const unscaledY = y / zoom;
+
     if (this.activeTool === 'draw') {
       this.drawingEngine.continueDrawing(x, y);
+      if (this.currentAnnotation && this.currentAnnotation.pointsUnscaled) {
+        this.currentAnnotation.pointsUnscaled.push({ x: unscaledX, y: unscaledY });
+      }
     } else if (this.activeTool === 'erase') {
       this.continueErasing(x, y);
     } else if (this.activeTool === 'highlight') {
       // For highlight, capture text selection on mouse up
-      this.continueDrawing(x, y);
+      this.continueDrawing(x, y, unscaledX, unscaledY);
     } else {
-      this.continueDrawing(x, y);
+      this.continueDrawing(x, y, unscaledX, unscaledY);
     }
   }
 
@@ -305,6 +339,9 @@ export class AnnotationManager {
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.25)`; // Reduced from 0.4 to 0.25
         ctx.globalAlpha = 1.0;
         
+        const activeTabObj = this.app.tabManager.getTab(tabId);
+        const zoom = activeTabObj ? (activeTabObj.zoom || 1.0) : 1.0;
+        
         for (let rect of rects) {
           const x = rect.left - layerRect.left;
           const y = rect.top - layerRect.top;
@@ -312,7 +349,14 @@ export class AnnotationManager {
           const h = rect.height;
           
           ctx.fillRect(x, y, w, h);
-          highlightRects.push({ x, y, w, h });
+          
+          // Store unscaled coordinates
+          highlightRects.push({ 
+            x: x / zoom, 
+            y: y / zoom, 
+            w: w / zoom, 
+            h: h / zoom 
+          });
         }
         
         // Store highlight data
@@ -364,7 +408,13 @@ export class AnnotationManager {
     const pathData = this.drawingEngine.stopDrawing();
     
     if (pathData && this.currentAnnotation) {
-      const { tabId, pageNum } = this.currentAnnotation;
+      const { tabId, pageNum, pointsUnscaled, thickness } = this.currentAnnotation;
+      
+      // Override points with unscaled points so they can be properly scalled on redraw
+      if (pointsUnscaled && pointsUnscaled.length > 0) {
+        pathData.points = pointsUnscaled;
+      }
+      pathData.thickness = thickness;
       
       // Store path data
       if (!this.drawPaths.has(tabId)) {
@@ -383,7 +433,7 @@ export class AnnotationManager {
     this.currentAnnotation = null;
   }
 
-  startDrawing(annotationLayer, x, y, tabId) {
+  startDrawing(annotationLayer, x, y, tabId, unscaledX, unscaledY) {
     // Create canvas for drawing
     let canvas = annotationLayer.querySelector('canvas');
     if (!canvas) {
@@ -421,6 +471,7 @@ export class AnnotationManager {
       canvas: canvas,
       ctx: ctx,
       points: [{ x, y }],
+      pointsUnscaled: [{ x: unscaledX, y: unscaledY }],
       color: displayColor, // Save the rgba color for highlights
       thickness: this.activeTool === 'draw' ? this.drawThickness : this.highlightThickness,
       savedImageData: savedImageData // Store the saved image data for highlights
@@ -441,17 +492,25 @@ export class AnnotationManager {
       ctx.globalCompositeOperation = 'source-over';
     }
     
-    ctx.lineWidth = this.currentAnnotation.thickness;
+    const activeTab = this.app.tabManager.getActiveTab();
+    const activeTabObj = activeTab ? this.app.tabManager.getTab(activeTab.id) : null;
+    const zoom = activeTabObj ? (activeTabObj.zoom || 1.0) : 1.0;
+
+    // Scale brush thickness dynamically for current draw preview
+    ctx.lineWidth = this.currentAnnotation.thickness * zoom;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
   }
 
-  continueDrawing(x, y) {
+  continueDrawing(x, y, unscaledX, unscaledY) {
     if (!this.currentAnnotation) return;
 
-    const { ctx, points, type, canvas, savedImageData } = this.currentAnnotation;
+    const { ctx, points, pointsUnscaled, type, canvas, savedImageData } = this.currentAnnotation;
     
     points.push({ x, y });
+    if (pointsUnscaled && unscaledX !== undefined && unscaledY !== undefined) {
+      pointsUnscaled.push({ x: unscaledX, y: unscaledY });
+    }
     
     if (type === 'highlight') {
       // For highlights, restore saved content, then redraw the entire path for uniform opacity
@@ -459,7 +518,12 @@ export class AnnotationManager {
       
       // Reapply the drawing settings
       ctx.strokeStyle = this.currentAnnotation.color;
-      ctx.lineWidth = this.currentAnnotation.thickness;
+      
+      const activeTab = this.app.tabManager.getActiveTab();
+      const activeTabObj = activeTab ? this.app.tabManager.getTab(activeTab.id) : null;
+      const zoom = activeTabObj ? (activeTabObj.zoom || 1.0) : 1.0;
+
+      ctx.lineWidth = this.currentAnnotation.thickness * zoom;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.globalAlpha = 1.0;
@@ -499,7 +563,7 @@ export class AnnotationManager {
       }
       
       this.highlightPaths.get(tabId).get(pageNum).push({
-        points: this.currentAnnotation.points,
+        points: this.currentAnnotation.pointsUnscaled || this.currentAnnotation.points,
         color: this.currentAnnotation.color,
         thickness: this.currentAnnotation.thickness,
         timestamp: Date.now()
@@ -513,7 +577,7 @@ export class AnnotationManager {
       this.annotations.get(tabId).push({
         page: pageNum,
         type: this.currentAnnotation.type,
-        points: this.currentAnnotation.points,
+        points: this.currentAnnotation.pointsUnscaled || this.currentAnnotation.points,
         color: this.currentAnnotation.color,
         thickness: this.currentAnnotation.thickness
       });
@@ -527,9 +591,12 @@ export class AnnotationManager {
   /**
    * Start erasing with new EraserEngine
    */
-  startErasing(annotationLayer, x, y, tabId) {
+  startErasing(annotationLayer, x, y, tabId, unscaledX, unscaledY) {
     const pageNum = parseInt(annotationLayer.dataset.page);
     let hasErasedSomething = false;
+    
+    const activeTabObj = this.app.tabManager.getTab(tabId);
+    const zoom = activeTabObj ? (activeTabObj.zoom || 1.0) : 1.0;
     
     // 1. Erase from draw overlay canvas (draw strokes)
     let drawCanvas = annotationLayer.querySelector('.draw-overlay-canvas');
@@ -537,15 +604,27 @@ export class AnnotationManager {
       const paths = this.drawPaths.get(tabId).get(pageNum);
       this.eraserEngine.initCanvas(drawCanvas);
       
+      // Need to convert stored paths (unscaled) to screen coordinates for eraser intersection
+      const scaledPaths = paths.map(path => ({
+        ...path,
+        points: path.points.map(p => ({ x: p.x * zoom, y: p.y * zoom }))
+      }));
+      
       // Find and remove paths that intersect with eraser
-      const result = this.eraserEngine.erasePaths(paths, x, y);
+      const result = this.eraserEngine.erasePaths(scaledPaths, x, y);
       
       if (result.erasedPaths.length > 0) {
+        // Convert surviving paths back to unscaled coordinates for storage
+        const survivingUnscaledPaths = result.survivingPaths.map(path => ({
+          ...path,
+          points: path.points.map(p => ({ x: p.x / zoom, y: p.y / zoom }))
+        }));
+        
         // Update stored paths
-        this.drawPaths.get(tabId).set(pageNum, result.survivingPaths);
+        this.drawPaths.get(tabId).set(pageNum, survivingUnscaledPaths);
         
         // Redraw canvas with remaining paths
-        this.redrawPage(drawCanvas, result.survivingPaths);
+        this.redrawPage(drawCanvas, survivingUnscaledPaths, zoom);
         
         hasErasedSomething = true;
       }
@@ -557,15 +636,25 @@ export class AnnotationManager {
       const paths = this.highlightPaths.get(tabId).get(pageNum);
       this.eraserEngine.initCanvas(highlightCanvas);
       
+      const scaledPaths = paths.map(path => ({
+        ...path,
+        points: path.points.map(p => ({ x: p.x * zoom, y: p.y * zoom }))
+      }));
+      
       // Find and remove highlight paths that intersect with eraser
-      const result = this.eraserEngine.erasePaths(paths, x, y);
+      const result = this.eraserEngine.erasePaths(scaledPaths, x, y);
       
       if (result.erasedPaths.length > 0) {
+        const survivingUnscaledPaths = result.survivingPaths.map(path => ({
+          ...path,
+          points: path.points.map(p => ({ x: p.x / zoom, y: p.y / zoom }))
+        }));
+
         // Update stored highlight paths
-        this.highlightPaths.get(tabId).set(pageNum, result.survivingPaths);
+        this.highlightPaths.get(tabId).set(pageNum, survivingUnscaledPaths);
         
         // Redraw canvas with remaining highlight paths
-        this.redrawHighlightPaths(highlightCanvas, result.survivingPaths);
+        this.redrawHighlightPaths(highlightCanvas, survivingUnscaledPaths, zoom);
         
         hasErasedSomething = true;
       }
@@ -579,7 +668,7 @@ export class AnnotationManager {
       highlights.forEach(highlight => {
         // Check if eraser intersects with any rect in this highlight
         const intersects = highlight.rects.some(rect => {
-          return this.eraserIntersectsRect(x, y, rect);
+          return this.eraserIntersectsRect(x, y, rect, zoom);
         });
         
         if (!intersects) {
@@ -615,12 +704,18 @@ export class AnnotationManager {
   /**
    * Check if eraser circle intersects with a rectangle
    */
-  eraserIntersectsRect(eraserX, eraserY, rect) {
+  eraserIntersectsRect(eraserX, eraserY, rect, zoom = 1.0) {
     const radius = this.eraserEngine.getRadius();
     
+    // Scale rectangle for intersection test to match screen coordinates
+    const rectX = rect.x * zoom;
+    const rectY = rect.y * zoom;
+    const rectW = rect.w * zoom;
+    const rectH = rect.h * zoom;
+    
     // Find closest point on rectangle to eraser center
-    const closestX = Math.max(rect.x, Math.min(eraserX, rect.x + rect.w));
-    const closestY = Math.max(rect.y, Math.min(eraserY, rect.y + rect.h));
+    const closestX = Math.max(rectX, Math.min(eraserX, rectX + rectW));
+    const closestY = Math.max(rectY, Math.min(eraserY, rectY + rectH));
     
     // Distance from eraser center to closest point
     const dx = eraserX - closestX;
@@ -633,7 +728,7 @@ export class AnnotationManager {
   /**
    * Redraw freehand highlight paths on a canvas
    */
-  redrawHighlightPaths(canvas, highlightPaths) {
+  redrawHighlightPaths(canvas, highlightPaths, zoom = 1.0) {
     const ctx = canvas.getContext('2d');
     
     // Clear canvas
@@ -644,14 +739,19 @@ export class AnnotationManager {
     
     // Redraw all highlight paths
     highlightPaths.forEach(pathData => {
-      this.drawingEngine.drawPath(pathData);
+      const scaledPathData = {
+        ...pathData,
+        points: pathData.points ? pathData.points.map(p => ({ x: p.x * zoom, y: p.y * zoom })) : [],
+        thickness: pathData.thickness * zoom
+      };
+      this.drawingEngine.drawPath(scaledPathData);
     });
   }
 
   /**
    * Redraw text-selection highlights (rectangles) on a canvas
    */
-  redrawTextHighlights(canvas, highlights) {
+  redrawTextHighlights(canvas, highlights, zoom = 1.0) {
     const ctx = canvas.getContext('2d');
     
     // Don't clear - there might be freehand highlights already drawn
@@ -668,117 +768,114 @@ export class AnnotationManager {
       ctx.globalAlpha = 1.0;
       
       highlight.rects.forEach(rect => {
-        ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+        ctx.fillRect(rect.x * zoom, rect.y * zoom, rect.w * zoom, rect.h * zoom);
       });
     });
   }
 
   /**
-   * Continue erasing (mouse drag)
+   * Redraw draw strokes on a canvas
    */
-  continueErasing(x, y) {
-    if (!this.currentAnnotation) return;
-    
-    const { tabId, pageNum, layer } = this.currentAnnotation;
-    
-    // 1. Erase from draw paths
-    let drawCanvas = layer.querySelector('.draw-overlay-canvas');
-    if (drawCanvas && this.drawPaths.has(tabId) && this.drawPaths.get(tabId).has(pageNum)) {
-      const paths = this.drawPaths.get(tabId).get(pageNum);
-      
-      // Find and remove paths that intersect with eraser
-      const result = this.eraserEngine.erasePaths(paths, x, y);
-      
-      if (result.erasedPaths.length > 0) {
-        // Update stored paths
-        this.drawPaths.get(tabId).set(pageNum, result.survivingPaths);
-        
-        // Redraw canvas with remaining paths
-        this.redrawPage(drawCanvas, result.survivingPaths);
-      }
-    }
-    
-    // 2. Erase freehand highlight paths
-    let highlightCanvas = layer.querySelector('canvas:not(.draw-overlay-canvas)');
-    if (highlightCanvas && this.highlightPaths.has(tabId) && this.highlightPaths.get(tabId).has(pageNum)) {
-      const paths = this.highlightPaths.get(tabId).get(pageNum);
-      
-      // Find and remove highlight paths that intersect with eraser
-      const result = this.eraserEngine.erasePaths(paths, x, y);
-      
-      if (result.erasedPaths.length > 0) {
-        // Update stored highlight paths
-        this.highlightPaths.get(tabId).set(pageNum, result.survivingPaths);
-        
-        // Redraw canvas with remaining highlight paths
-        this.redrawHighlightPaths(highlightCanvas, result.survivingPaths);
-      }
-    }
-    
-    // 3. Erase text-selection highlights (rect-based)
-    if (this.highlights.has(tabId) && this.highlights.get(tabId).has(pageNum)) {
-      const highlights = this.highlights.get(tabId).get(pageNum);
-      const survivingHighlights = [];
-      
-      highlights.forEach(highlight => {
-        // Check if eraser intersects with any rect in this highlight
-        const intersects = highlight.rects.some(rect => {
-          return this.eraserIntersectsRect(x, y, rect);
-        });
-        
-        if (!intersects) {
-          survivingHighlights.push(highlight);
-        }
-      });
-      
-      // Update stored highlights
-      this.highlights.get(tabId).set(pageNum, survivingHighlights);
-      
-      // Redraw text-selection highlights
-      if (highlightCanvas) {
-        this.redrawTextHighlights(highlightCanvas, survivingHighlights);
-      }
-    }
-  }
-
-  /**
-   * Finish erasing
-   */
-  finishErasing() {
-    // Just clear the current annotation, changes already saved
-    this.currentAnnotation = null;
-  }
-
-  /**
-   * Redraw a page canvas with given paths
-   */
-  redrawPage(canvas, paths) {
+  redrawPage(canvas, paths, zoom = 1.0) {
     const ctx = canvas.getContext('2d');
-    
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Initialize drawing engine with this canvas
     this.drawingEngine.initCanvas(canvas);
     
-    // Redraw all paths
     paths.forEach(pathData => {
-      this.drawingEngine.drawPath(pathData);
+      const scaledPathData = {
+        ...pathData,
+        points: pathData.points ? pathData.points.map(p => ({ x: p.x * zoom, y: p.y * zoom })) : [],
+        thickness: (pathData.thickness || 3) * zoom
+      };
+      this.drawingEngine.drawPath(scaledPathData);
     });
   }
 
-  addText(annotationLayer, x, y, tabId) {
-    // Use TextTool to create a text box with formatting toolbar
-    this.textTool.createTextBox(annotationLayer, x, y, tabId);
-  }
+  /**
+   * Restore annotations for a re-rendered page (e.g., after zoom)
+   */
+  restorePageAnnotations(tabId, pageNum, annotationLayerDiv) {
+    if (!annotationLayerDiv) return;
 
-  switchToTab(tabId) {
-    // Annotations are re-rendered with pages
-    // This method can be used to restore annotations if needed
-  }
+    const activeTabObj = this.app.tabManager.getTab(tabId);
+    const zoom = activeTabObj ? (activeTabObj.zoom || 1.0) : 1.0;
 
-  closeTab(tabId) {
-    this.annotations.delete(tabId);
+    // 1. Restore draw paths
+    if (this.drawPaths.has(tabId) && this.drawPaths.get(tabId).has(pageNum)) {
+      const paths = this.drawPaths.get(tabId).get(pageNum);
+      if (paths && paths.length > 0) {
+        let drawCanvas = annotationLayerDiv.querySelector('.draw-overlay-canvas');
+        if (!drawCanvas) {
+          drawCanvas = document.createElement('canvas');
+          drawCanvas.className = 'draw-overlay-canvas';
+          const width = annotationLayerDiv.offsetWidth;
+          const height = annotationLayerDiv.offsetHeight;
+          drawCanvas.width = width;
+          drawCanvas.height = height;
+          drawCanvas.style.position = 'absolute';
+          drawCanvas.style.top = '0';
+          drawCanvas.style.left = '0';
+          drawCanvas.style.width = `${width}px`;
+          drawCanvas.style.height = `${height}px`;
+          annotationLayerDiv.appendChild(drawCanvas);
+        }
+        this.redrawPage(drawCanvas, paths, zoom);
+      }
+    }
+
+    // 2. Restore highlight paths
+    const hasHighlightPaths = this.highlightPaths.has(tabId) && this.highlightPaths.get(tabId).has(pageNum) && this.highlightPaths.get(tabId).get(pageNum).length > 0;
+    const hasTextHighlights = this.highlights.has(tabId) && this.highlights.get(tabId).has(pageNum) && this.highlights.get(tabId).get(pageNum).length > 0;
+
+    if (hasHighlightPaths || hasTextHighlights) {
+      let highlightCanvas = annotationLayerDiv.querySelector('canvas:not(.draw-overlay-canvas)');
+      if (!highlightCanvas) {
+        highlightCanvas = document.createElement('canvas');
+        const width = annotationLayerDiv.offsetWidth || annotationLayerDiv.clientWidth;
+        const height = annotationLayerDiv.offsetHeight || annotationLayerDiv.clientHeight;
+        highlightCanvas.width = width;
+        highlightCanvas.height = height;
+        highlightCanvas.style.position = 'absolute';
+        highlightCanvas.style.top = '0';
+        highlightCanvas.style.left = '0';
+        annotationLayerDiv.appendChild(highlightCanvas);
+      }
+
+      const ctx = highlightCanvas.getContext('2d');
+      ctx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
+
+      if (hasHighlightPaths) {
+        const hPaths = this.highlightPaths.get(tabId).get(pageNum);
+        // Call redrawHighlightPaths WITHOUT clearing the canvas
+        // (but wait, redrawHighlightPaths DOES clear the canvas internally in our code, so let's handle it)
+        this.drawingEngine.initCanvas(highlightCanvas);
+        hPaths.forEach(pathData => {
+          const scaledPathData = {
+            ...pathData,
+            points: pathData.points ? pathData.points.map(p => ({ x: p.x * zoom, y: p.y * zoom })) : [],
+            thickness: pathData.thickness * zoom
+          };
+          this.drawingEngine.drawPath(scaledPathData);
+        });
+      }
+
+      if (hasTextHighlights) {
+        const tHighlights = this.highlights.get(tabId).get(pageNum);
+        // Redraw without clearing
+        tHighlights.forEach(highlight => {
+          const r = parseInt(highlight.color.slice(1, 3), 16);
+          const g = parseInt(highlight.color.slice(3, 5), 16);
+          const b = parseInt(highlight.color.slice(5, 7), 16);
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.25)`;
+          ctx.globalAlpha = 1.0;
+          
+          highlight.rects.forEach(rect => {
+            ctx.fillRect(rect.x * zoom, rect.y * zoom, rect.w * zoom, rect.h * zoom);
+          });
+        });
+      }
+    }
   }
 
   setDrawColor(color) {

@@ -1968,3 +1968,77 @@ body.text-tool-active #pdf-container {
 .notification-info {
   background: #4a9eff;
 }
+
+/* Print Optimization */
+@media print {
+  /* Hide UI elements that shouldn't be printed */
+  .toolbar,
+  #tabs-bar,
+  .tabs-bar,
+  .tabs-container,
+  .sidebar,
+  .sidebar-header,
+  .sidebar-modes,
+  .sidebar-content,
+  #sidebar,
+  .tab-bar,
+  .drawing-toolbar,
+  .text-formatting-toolbar,
+  .popover,
+  .modal,
+  .search-bar,
+  #btn-open-file,
+  .empty-state {
+    display: none !important;
+  }
+
+  /* Reset layout for printing to let the browser handle pages natively */
+  body, html, #app, .content-area, .pdf-container, .pdf-viewer, #pdf-container, #pdf-viewer {
+    height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    position: static !important;
+    display: block !important;
+  }
+
+  /* Ensure pages are stacked and visible clearly */
+  .page-container {
+    margin: 0 0 10mm 0 !important;
+    box-shadow: none !important;
+    page-break-after: always !important; /* Force page break after each PDF page */
+    position: relative !important;
+    border: none !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Remove page break from the last page */
+  .page-container:last-child {
+    page-break-after: auto !important;
+  }
+
+  /* Make sure the canvas rendering the crisp PDF and the annotations are perfectly stacked */
+  .pdf-page, .annotation-layer, .draw-overlay-canvas {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  /* Scale canvas correctly */
+  canvas.pdf-page {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  /* Hide the minimal text layer completely for print since we only want to print visual content + annotations */
+  .text-layer {
+    display: none !important; 
+  }
+}

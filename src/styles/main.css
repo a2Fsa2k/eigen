@@ -733,20 +733,23 @@ body.dark-mode .pdf-container {
 }
 
 .two-page-layout {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  flex-direction: row !important;
-  align-items: flex-start !important;
+  display: grid !important;
+  grid-template-columns: auto auto !important;
   justify-content: center !important;
-  gap: 20px !important;
+  align-items: start !important;
+  column-gap: 20px !important;
+  row-gap: 20px !important;
 }
 
 .two-page-layout .page-container {
-  display: inline-block !important;
-  margin: 10px !important;
-  vertical-align: top;
-  flex: 0 0 auto;
-  /* Remove max-width to prevent overlap when zooming */
+  /* Keep natural size from JS (width/height set on element) */
+  margin: 0 !important;
+  justify-self: center;
+}
+
+/* Disable old flex-row-break hacks (no effect in grid, but keep safe) */
+.two-page-layout .page-container:nth-child(2n)::after {
+  content: none !important;
 }
 
 /* Popovers */
@@ -1330,43 +1333,33 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #4a9eff;
+  background: #ffffff;
   cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-}
-
-.highlight-popover .thickness-slider::-webkit-slider-thumb:hover {
-  background: #6ab0ff;
-  transform: scale(1.1);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.45);
 }
 
 .highlight-popover .thickness-slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #4a9eff;
+  background: #ffffff;
   cursor: pointer;
   border: none;
-  transition: all 0.2s;
-}
-
-.highlight-popover .thickness-slider::-moz-range-thumb:hover {
-  background: #6ab0ff;
-  transform: scale(1.1);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.45);
 }
 
 .highlight-popover .thickness-slider-labels {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #aaa;
+  color: #e0e0e0;
+  opacity: 0.85;
   margin-top: 2px;
 }
 
 .highlight-popover .divider {
   height: 1px;
-  background: #555;
+  background: rgba(255,255,255,0.15);
   border: none;
   margin: 16px 0;
 }
@@ -1423,15 +1416,6 @@ body.dark-mode .highlight-popover .color-swatch.selected {
 }
 body.dark-mode .highlight-popover .divider {
   background: #222;
-}
-
-.text-layer span::selection {
-  background: #cce6ff80 !important;
-  border-radius: 3px;
-}
-.text-layer span::-moz-selection {
-  background: #cce6ff80 !important;
-  border-radius: 3px;
 }
 
 /* Draw Tool Dropdown */
@@ -1494,11 +1478,6 @@ body.dark-mode .highlight-popover .divider {
 .color-swatch.active {
   border-color: #4a9eff;
   box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.3);
-}
-
-.color-swatch:focus {
-  outline: none;
-  border-color: #4a9eff;
 }
 
 /* Thickness Slider */
@@ -1971,6 +1950,10 @@ body.text-tool-active #pdf-container {
 
 /* Print Optimization */
 @media print {
+  @page {
+    margin: 0;
+  }
+
   /* Hide UI elements that shouldn't be printed */
   .toolbar,
   #tabs-bar,
@@ -2009,36 +1992,124 @@ body.text-tool-active #pdf-container {
   .page-container {
     margin: 0 0 10mm 0 !important;
     box-shadow: none !important;
-    page-break-after: always !important; /* Force page break after each PDF page */
+    page-break-after: always !important;
     position: relative !important;
     border: none !important;
     display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  
-  /* Remove page break from the last page */
-  .page-container:last-child {
-    page-break-after: auto !important;
+
+    /* Don't force full-width: it stretches the canvas and changes aspect */
+    width: auto !important;
+    max-width: none !important;
   }
 
-  /* Make sure the canvas rendering the crisp PDF and the annotations are perfectly stacked */
+  /* Keep the PDF canvas at its own size (set by JS) */
+  canvas.pdf-page {
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    display: block;
+  }
+
+  /* Make canvas and annotations align using the page-container's box */
   .pdf-page, .annotation-layer, .draw-overlay-canvas {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
-    max-width: 100% !important;
+    width: auto !important;
     height: auto !important;
-  }
-  
-  /* Scale canvas correctly */
-  canvas.pdf-page {
-    width: 100% !important;
-    height: 100% !important;
+    max-width: none !important;
   }
   
   /* Hide the minimal text layer completely for print since we only want to print visual content + annotations */
   .text-layer {
     display: none !important; 
   }
+}
+
+/* Highlight popover (derive from draw-tool-dropdown theme) */
+.popover.popover-highlight {
+  /* match draw-tool-dropdown */
+  background: #2a2a2a;
+  border: 1px solid #555;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+
+  /* compact like draw dropdown */
+  width: 240px;
+  padding: 16px;
+}
+
+.popover.popover-highlight .popover-header {
+  /* similar to draw-tool-label, but keep title case */
+  font-size: 16px;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 10px;
+}
+
+.popover.popover-highlight .popover-section {
+  margin-top: 14px;
+}
+
+.color-grid.color-grid-circles .color-swatch {
+  width: 32px;
+  height: 32px;
+}
+
+.color-grid.color-grid-circles {
+  gap: 10px;
+}
+
+/* Selected state aligned with draw-tool palette accent */
+.color-grid.color-grid-circles .color-swatch.selected::after {
+  inset: -4px;
+  border-width: 2px;
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.3);
+}
+
+.highlight-preview {
+  height: 62px;
+  margin: 12px 0 0;
+}
+
+.highlight-preview-stroke {
+  height: 52px;
+  filter: none;
+}
+
+.highlight-thickness-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 8px 0 8px;
+}
+
+.icon-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid #666;
+  color: #e0e0e0;
+  opacity: 0.75;
+}
+
+/* Highlight preview now uses SVG path */
+.popover.popover-highlight .highlight-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.highlight-preview-svg {
+  width: 100%;
+  height: 64px;
+  display: block;
+}
+
+/* Ensure slider labels are on opposite ends */
+.popover.popover-highlight .slider-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }

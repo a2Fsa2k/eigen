@@ -13,6 +13,9 @@ export class PDFRenderer {
     this.pageElements = new Map();
     this.viewer = document.getElementById('pdf-viewer');
     this.container = document.getElementById('pdf-container');
+
+    // Track which layout the cached pageElements were rendered with per tab.
+    this.renderedLayoutByTab = new Map();
     
     this.setupScrollListener();
   }
@@ -47,33 +50,29 @@ export class PDFRenderer {
 
     console.log('renderDocument called:', { tabId, pageLayout: tab.pageLayout });
 
+    // Mark what layout we're rendering for this tab so switchToTab can validate cache.
+    const pageLayout = tab.pageLayout || 'single';
+    this.renderedLayoutByTab.set(tabId, pageLayout);
+
     this.viewer.innerHTML = '';
     const pages = [];
 
-    const pageLayout = tab.pageLayout || 'single';
-    
     console.log('Applying page layout:', pageLayout);
     
-    // Apply layout class
+    // Apply layout class (CSS owns the layout rules)
     if (pageLayout === 'two-page') {
       this.viewer.classList.add('two-page-layout');
-      // Explicitly set flex properties for two-page layout
-      this.viewer.style.display = 'flex';
-      this.viewer.style.flexDirection = 'row';
-      this.viewer.style.flexWrap = 'wrap';
-      this.viewer.style.justifyContent = 'center';
-      this.viewer.style.alignItems = 'flex-start';
-      this.viewer.style.gap = '20px';
     } else {
       this.viewer.classList.remove('two-page-layout');
-      // Reset to single page (column) layout
-      this.viewer.style.display = 'flex';
-      this.viewer.style.flexDirection = 'column';
-      this.viewer.style.flexWrap = 'nowrap';
-      this.viewer.style.alignItems = 'center';
-      this.viewer.style.justifyContent = 'flex-start';
-      this.viewer.style.gap = '0';
     }
+
+    // Clear any previously forced inline layout styles
+    this.viewer.style.display = '';
+    this.viewer.style.flexDirection = '';
+    this.viewer.style.flexWrap = '';
+    this.viewer.style.justifyContent = '';
+    this.viewer.style.alignItems = '';
+    this.viewer.style.gap = '';
 
     // Render pages
     for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
@@ -191,33 +190,35 @@ export class PDFRenderer {
     // Check if pages are already rendered for this tab
     const existingPages = this.pageElements.get(tabId);
     const tab = this.app.tabManager.getTab(tabId);
-    
-    if (existingPages && existingPages.length > 0) {
+
+    // If cached pages were rendered with a different layout than the tab currently wants,
+    // force a re-render (otherwise stale DOM can make two-page only appear after zoom).
+    const desiredLayout = (tab && tab.pageLayout) ? tab.pageLayout : 'single';
+    const cachedLayout = this.renderedLayoutByTab.get(tabId);
+    const cacheLayoutMismatch = !!(cachedLayout && cachedLayout !== desiredLayout);
+
+    if (existingPages && existingPages.length > 0 && !cacheLayoutMismatch) {
       // Pages already rendered, just show them
       this.viewer.innerHTML = '';
       existingPages.forEach(page => {
         this.viewer.appendChild(page);
       });
       
-      // Apply layout class
+      // Apply layout class (CSS owns the layout rules)
       const pageLayout = tab.pageLayout || 'single';
       if (pageLayout === 'two-page') {
         this.viewer.classList.add('two-page-layout');
-        this.viewer.style.display = 'flex';
-        this.viewer.style.flexDirection = 'row';
-        this.viewer.style.flexWrap = 'wrap';
-        this.viewer.style.justifyContent = 'center';
-        this.viewer.style.alignItems = 'flex-start';
-        this.viewer.style.gap = '20px';
       } else {
         this.viewer.classList.remove('two-page-layout');
-        this.viewer.style.display = 'flex';
-        this.viewer.style.flexDirection = 'column';
-        this.viewer.style.flexWrap = 'nowrap';
-        this.viewer.style.alignItems = 'center';
-        this.viewer.style.justifyContent = 'flex-start';
-        this.viewer.style.gap = '0';
       }
+
+      // Clear any previously forced inline layout styles
+      this.viewer.style.display = '';
+      this.viewer.style.flexDirection = '';
+      this.viewer.style.flexWrap = '';
+      this.viewer.style.justifyContent = '';
+      this.viewer.style.alignItems = '';
+      this.viewer.style.gap = '';
       
       // Restore scroll position after a short delay to ensure DOM is ready
       if (tab && tab.scrollPosition !== undefined) {
@@ -226,8 +227,19 @@ export class PDFRenderer {
         });
       }
     } else {
-      // First time rendering this tab, render all pages
-      this.renderDocument(tabId);
+      // First time rendering this tab OR cache is stale for the requested layout.
+      // Invalidate cached pages and re-render for the active layout.
+      if (cacheLayoutMismatch) {
+        this.pageElements.set(tabId, []);
+      }
+
+      this.renderDocument(tabId).then(() => {
+        if (tab && tab.scrollPosition !== undefined) {
+          requestAnimationFrame(() => {
+            this.container.scrollTop = tab.scrollPosition;
+          });
+        }
+      });
     }
   }
 
@@ -238,6 +250,7 @@ export class PDFRenderer {
     }
     this.documents.delete(tabId);
     this.pageElements.delete(tabId);
+    this.renderedLayoutByTab?.delete(tabId);
   }
 
   getDocument(tabId) {
@@ -279,7 +292,24 @@ export class PDFRenderer {
 
   async setPageLayout(tabId, layout) {
     console.log('setPageLayout called:', { tabId, layout });
+
+    const tab = this.app.tabManager.getTab(tabId);
+    if (!tab) return;
+
+    // Persist layout so renderDocument/switchToTab sees it
+    this.app.tabManager.updateTab(tabId, { pageLayout: layout });
+
+    // Invalidate cached pages: layout changes affect container sizing/flow.
+    this.pageElements.set(tabId, []);
+    this.renderedLayoutByTab.delete(tabId);
+
+    // Keep current page position when re-rendering
+    const currentPage = tab.currentPage || 1;
+
     await this.renderDocument(tabId);
+
+    // Restore the current page after layout change
+    await this.goToPage(tabId, currentPage);
   }
 
   async goToPage(tabId, pageNum) {

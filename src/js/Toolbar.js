@@ -230,7 +230,142 @@ export class Toolbar {
     const activeTab = this.app.tabManager.getActiveTab();
     if (!activeTab) return;
 
-    window.print();
+    const viewer = document.getElementById('pdf-viewer');
+    if (!viewer) {
+      window.print();
+      return;
+    }
+
+    const pageEls = Array.from(viewer.querySelectorAll('.page-container'));
+    if (pageEls.length === 0) {
+      window.print();
+      return;
+    }
+
+    // IMPORTANT: cloning <canvas> does NOT copy its pixels. For printing we need to
+    // convert canvases to images (data URLs) so the bitmap is preserved.
+    const pagesHtml = pageEls
+      .map((pageEl) => {
+        const pageCanvas = pageEl.querySelector('canvas.pdf-page');
+        if (!pageCanvas) return '';
+
+        const pageW = pageCanvas.width;
+        const pageH = pageCanvas.height;
+
+        const pageUrl = pageCanvas.toDataURL('image/png');
+
+        const overlayUrls = [];
+        pageEl.querySelectorAll('.annotation-layer canvas, canvas.draw-overlay-canvas')
+          .forEach((c) => {
+            try {
+              // Skip the base PDF canvas if it matches selector somehow
+              if (c.classList.contains('pdf-page')) return;
+              overlayUrls.push(c.toDataURL('image/png'));
+            } catch {
+              // ignore
+            }
+          });
+
+        const overlaysHtml = overlayUrls
+          .map((url) => `<img class="overlay" src="${url}" alt="" />`)
+          .join('');
+
+        return `
+          <div class="print-page" style="width:${pageW}px;height:${pageH}px">
+            <img class="base" src="${pageUrl}" alt="" />
+            ${overlaysHtml}
+          </div>
+        `;
+      })
+      .join('\n');
+
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
+
+    document.body.appendChild(iframe);
+
+    const frameWin = iframe.contentWindow;
+    const doc = frameWin?.document;
+    if (!doc || !frameWin) {
+      iframe.remove();
+      window.print();
+      return;
+    }
+
+    let didPrint = false;
+    const cleanup = () => setTimeout(() => iframe.remove(), 1000);
+
+    const triggerPrintOnce = () => {
+      if (didPrint) return;
+      didPrint = true;
+      try {
+        frameWin.focus();
+        frameWin.print();
+      } finally {
+        cleanup();
+      }
+    };
+
+    iframe.onload = () => {
+      frameWin.requestAnimationFrame(() => {
+        frameWin.requestAnimationFrame(triggerPrintOnce);
+      });
+    };
+
+    doc.open();
+    doc.write(`<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Print</title>
+  <style>
+    @page { margin: 0; }
+    html, body { margin: 0; padding: 0; background: #fff; }
+
+    .print-page {
+      position: relative;
+      margin: 0 auto;
+      page-break-after: always;
+    }
+    .print-page:last-child { page-break-after: auto; }
+
+    .print-page > img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  ${pagesHtml}
+</body>
+</html>`);
+    doc.close();
+
+    const readyPoll = setInterval(() => {
+      if (didPrint) {
+        clearInterval(readyPoll);
+        return;
+      }
+      const state = doc.readyState;
+      if (state === 'interactive' || state === 'complete') {
+        clearInterval(readyPoll);
+        frameWin.requestAnimationFrame(() => {
+          frameWin.requestAnimationFrame(triggerPrintOnce);
+        });
+      }
+    }, 25);
   }
 
   async save() {
@@ -352,86 +487,80 @@ export class Toolbar {
 
   setupHighlightPopover() {
     const popover = document.getElementById('popover-highlight');
-    const colorRow = document.getElementById('highlight-color-row');
-    const strokeCanvas = document.getElementById('highlight-stroke-canvas');
-    const thicknessSlider = document.getElementById('highlight-thickness-slider');
-    const textToggle = document.getElementById('highlight-text-toggle');
+    const colorGrid = document.getElementById('highlight-color-grid');
+    const thicknessSlider = document.getElementById('highlight-thickness');
+    const textOnlyToggle = document.getElementById('highlight-text-only');
 
-    // Fixed highlight palette
+    // SVG preview elements
+    const previewPath = document.getElementById('highlight-preview-path');
+
     const colors = [
-      { name: 'Highlight Yellow', value: '#FFF176' },
-      { name: 'Highlight Green', value: '#7CFF6B' },
-      { name: 'Highlight Blue', value: '#9EE7FF' },
-      { name: 'Highlight Pink', value: '#FF9EDB' },
-      { name: 'Highlight Red', value: '#FF5A5A' }
+      '#FFFF00', '#7CFF5B', '#7FD9FF', '#FF8FD0', '#FF4B4B'
     ];
 
-    // Remove any existing swatches
-    colorRow.innerHTML = '';
-    colors.forEach((color, idx) => {
-      const swatch = document.createElement('div');
+    colorGrid.innerHTML = '';
+    colors.forEach(color => {
+      const swatch = document.createElement('button');
+      swatch.type = 'button';
       swatch.className = 'color-swatch';
-      swatch.style.background = color.value;
-      swatch.title = color.name;
-      if (this.app.annotationManager.highlightColor === color.value || (idx === 0 && !this.app.annotationManager.highlightColor)) {
+      swatch.style.background = color;
+      swatch.setAttribute('aria-label', `Highlight color ${color}`);
+
+      swatch.addEventListener('click', () => {
+        colorGrid.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected', 'active'));
         swatch.classList.add('selected');
-      }
-      swatch.addEventListener('click', (event) => {
-        colorRow.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
-        swatch.classList.add('selected');
-        this.app.annotationManager.setHighlightColor(color.value);
-        renderStrokePreview();
-        setTimeout(() => this.closeAllPopovers(), 0); // allow other click events to fire
-        event.stopPropagation();
+        this.app.annotationManager.setHighlightColor(color);
+        if (previewPath) previewPath.setAttribute('stroke', color);
       });
-      colorRow.appendChild(swatch);
+
+      colorGrid.appendChild(swatch);
     });
 
-    // Stroke preview rendering
-    function renderStrokePreview() {
-      const ctx = strokeCanvas.getContext('2d');
-      ctx.clearRect(0, 0, strokeCanvas.width, strokeCanvas.height);
-      // Find selected color
-      const selected = colorRow.querySelector('.color-swatch.selected');
-      const color = selected ? selected.style.background : colors[0].value;
-      const thickness = parseInt(thicknessSlider.value, 10);
-      // Draw organic stroke
-      ctx.save();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = thickness;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.globalAlpha = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(10, 12 + Math.sin(0) * 2);
-      for (let x = 10; x <= 80; x += 7) {
-        ctx.lineTo(x, 12 + Math.sin(x / 10) * 4);
-      }
-      ctx.stroke();
-      ctx.restore();
+    // Defaults: sync UI from manager
+    const initialColor = this.app.annotationManager.highlightColor || colors[0];
+    const initialThickness = parseInt(this.app.annotationManager.highlightThickness || thicknessSlider.value || '15', 10);
+
+    // select closest matching swatch
+    const swatches = Array.from(colorGrid.querySelectorAll('.color-swatch'));
+    const found = swatches.find(s => String(s.style.background).toLowerCase() === initialColor.toLowerCase());
+    (found || swatches[0])?.classList.add('selected');
+
+    this.app.annotationManager.setHighlightColor(initialColor);
+    this.app.annotationManager.setHighlightThickness(initialThickness);
+
+    thicknessSlider.value = String(initialThickness);
+    if (previewPath) {
+      previewPath.setAttribute('stroke', initialColor);
+      previewPath.setAttribute('stroke-width', String(initialThickness));
     }
+
+    // Thickness slider
     thicknessSlider.addEventListener('input', () => {
-      this.app.annotationManager.setHighlightThickness(parseInt(thicknessSlider.value, 10));
-      renderStrokePreview();
+      const thickness = parseInt(thicknessSlider.value, 10);
+      this.app.annotationManager.setHighlightThickness(thickness);
+      if (previewPath) previewPath.setAttribute('stroke-width', String(thickness));
     });
 
-    // Initial render
-    renderStrokePreview();
+    // Text only mode
+    if (textOnlyToggle) {
+      const thicknessSection = popover.querySelector('.highlight-thickness-section');
 
-    // Toggle switch logic
-    function setToggle(on) {
-      if (on) {
-        textToggle.classList.add('on');
-      } else {
-        textToggle.classList.remove('on');
-      }
+      const applyTextOnlyUI = () => {
+        const disabled = !!textOnlyToggle.checked;
+        if (thicknessSection) {
+          thicknessSection.style.opacity = disabled ? '0.45' : '1';
+          thicknessSection.style.pointerEvents = disabled ? 'none' : 'auto';
+        }
+      };
+
+      textOnlyToggle.checked = !!this.app.annotationManager.highlightTextOnly;
+      applyTextOnlyUI();
+
+      textOnlyToggle.addEventListener('change', () => {
+        this.app.annotationManager.setHighlightTextOnly(textOnlyToggle.checked);
+        applyTextOnlyUI();
+      });
     }
-    setToggle(this.app.annotationManager.highlightTextOnly);
-    textToggle.onclick = () => {
-      const isOn = !textToggle.classList.contains('on');
-      setToggle(isOn);
-      this.app.annotationManager.setHighlightTextOnly(isOn);
-    };
   }
 
   setupPageLayoutPopover() {
@@ -440,27 +569,32 @@ export class Toolbar {
 
     console.log('Setting up page layout popover', { popover, options: options.length });
 
+    const applyActiveStateFromTab = () => {
+      const activeTab = this.app.tabManager.getActiveTab();
+      const layout = activeTab?.pageLayout || 'single';
+      options.forEach(o => o.classList.toggle('active', o.dataset.layout === layout));
+    };
+
     options.forEach(option => {
-      option.addEventListener('click', () => {
+      option.addEventListener('click', async () => {
         const layout = option.dataset.layout;
         console.log('Layout option clicked:', layout);
-        
-        options.forEach(o => o.classList.remove('active'));
-        option.classList.add('active');
-        
-        const activeTab = this.app.tabManager.getActiveTab();
-        if (activeTab) {
-          console.log('Setting layout for tab:', activeTab.id, layout);
-          this.app.tabManager.updateTab(activeTab.id, { pageLayout: layout });
-          this.app.pdfRenderer.setPageLayout(activeTab.id, layout);
+
+        try {
+          const activeTab = this.app.tabManager.getActiveTab();
+          if (activeTab) {
+            // PDFRenderer.setPageLayout now persists state + rerenders
+            await this.app.pdfRenderer.setPageLayout(activeTab.id, layout);
+          }
+        } finally {
+          applyActiveStateFromTab();
+          this.closeAllPopovers();
         }
-        
-        this.closeAllPopovers();
       });
     });
 
-    // Set default
-    options[0].classList.add('active');
+    // Initialize active state
+    applyActiveStateFromTab();
   }
 
   setupSettingsPopover() {

@@ -913,4 +913,64 @@ export class AnnotationManager {
       layer.style.display = hide ? 'none' : '';
     });
   }
+
+  /**
+   * Called when user switches between tabs.
+   * Ensures annotations are restored for the newly active tab.
+   */
+  switchToTab(tabId) {
+    // Defensive: older code paths expect this method.
+    // Actual redraw will also happen when pages are re-rendered via PDFRenderer.
+    try {
+      const tab = this.app.tabManager.getTab(tabId);
+      if (!tab) return;
+
+      // Restore tool state for the tab
+      if (typeof tab.activeTool !== 'undefined') {
+        this.setActiveTool(tab.activeTool);
+      }
+
+      // Restore annotations for currently rendered pages (if any)
+      const layers = document.querySelectorAll(`.annotation-layer[data-tab="${tabId}"]`);
+      if (layers.length > 0) {
+        layers.forEach(layer => {
+          const pageNum = parseInt(layer.dataset.page, 10);
+          if (!Number.isNaN(pageNum)) {
+            this.restorePageAnnotations(tabId, pageNum, layer);
+          }
+        });
+      } else {
+        // Fallback: restore by page num only
+        document.querySelectorAll('.annotation-layer').forEach(layer => {
+          const pageNum = parseInt(layer.dataset.page, 10);
+          if (!Number.isNaN(pageNum)) {
+            this.restorePageAnnotations(tabId, pageNum, layer);
+          }
+        });
+      }
+    } catch (e) {
+      console.error('AnnotationManager.switchToTab error:', e);
+    }
+  }
+
+  /**
+   * Cleanup annotations for a closed tab.
+   */
+  closeTab(tabId) {
+    try {
+      this.annotations.delete(tabId);
+      this.drawPaths.delete(tabId);
+      this.highlightPaths.delete(tabId);
+      this.highlights.delete(tabId);
+      this.pageAnnotations.delete(tabId);
+
+      // If active tool was tied to this tab, just clear tool state
+      const activeTab = this.app.tabManager.getActiveTab();
+      if (!activeTab || activeTab.id === tabId) {
+        this.setActiveTool(null);
+      }
+    } catch (e) {
+      console.error('AnnotationManager.closeTab error:', e);
+    }
+  }
 }

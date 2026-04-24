@@ -84,6 +84,11 @@ export class PDFRenderer {
     }
 
     this.pageElements.set(tabId, pages);
+
+    // Restore stored annotations onto the freshly recreated layers
+    if (this.app.annotationManager?.restoreAnnotationsForTab) {
+      this.app.annotationManager.restoreAnnotationsForTab(tabId);
+    }
   }
 
   async createPageContainer(doc, pageNum, tabId) {

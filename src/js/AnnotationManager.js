@@ -312,7 +312,7 @@ export class AnnotationManager {
           const h = rect.height;
 
           ctx.fillRect(x, y, w, h);
-          highlightRects.push({ x, y, w, h });
+          highlightRects.push(this.normalizeRect({ x, y, w, h }, layer));
         }
 
         // Store highlight data
@@ -325,6 +325,7 @@ export class AnnotationManager {
 
         this.highlights.get(tabId).get(pageNum).push({
           rects: highlightRects,
+          normalized: true,
           color: this.highlightColor,
           timestamp: Date.now()
         });
@@ -362,10 +363,16 @@ export class AnnotationManager {
    */
   finishNewDrawing() {
     const pathData = this.drawingEngine.stopDrawing();
-    
+
     if (pathData && this.currentAnnotation) {
-      const { tabId, pageNum } = this.currentAnnotation;
-      
+      const { tabId, pageNum, layer } = this.currentAnnotation;
+
+      // Normalize points to layer-relative coords so they survive zoom/layout changes.
+      if (layer && Array.isArray(pathData.points)) {
+        pathData.points = pathData.points.map(p => this.normalizePoint(p.x, p.y, layer));
+        pathData.normalized = true;
+      }
+
       // Store path data
       if (!this.drawPaths.has(tabId)) {
         this.drawPaths.set(tabId, new Map());
@@ -373,13 +380,13 @@ export class AnnotationManager {
       if (!this.drawPaths.get(tabId).has(pageNum)) {
         this.drawPaths.get(tabId).set(pageNum, []);
       }
-      
+
       this.drawPaths.get(tabId).get(pageNum).push(pathData);
-      
+
       // Mark tab as changed
       this.markTabAsChanged(tabId);
     }
-    
+
     this.currentAnnotation = null;
   }
 
@@ -497,9 +504,13 @@ export class AnnotationManager {
       if (!this.highlightPaths.get(tabId).has(pageNum)) {
         this.highlightPaths.get(tabId).set(pageNum, []);
       }
-      
+
+      const layer = this.currentAnnotation.layer;
+      const normalizedPoints = (this.currentAnnotation.points || []).map(p => this.normalizePoint(p.x, p.y, layer));
+
       this.highlightPaths.get(tabId).get(pageNum).push({
-        points: this.currentAnnotation.points,
+        points: normalizedPoints,
+        normalized: true,
         color: this.currentAnnotation.color,
         thickness: this.currentAnnotation.thickness,
         timestamp: Date.now()
@@ -509,7 +520,7 @@ export class AnnotationManager {
       if (!this.annotations.has(tabId)) {
         this.annotations.set(tabId, []);
       }
-      
+
       this.annotations.get(tabId).push({
         page: pageNum,
         type: this.currentAnnotation.type,
@@ -635,15 +646,15 @@ export class AnnotationManager {
    */
   redrawHighlightPaths(canvas, highlightPaths) {
     const ctx = canvas.getContext('2d');
-    
+
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+
     // Initialize drawing engine with this canvas
     this.drawingEngine.initCanvas(canvas);
-    
+
     // Redraw all highlight paths
-    highlightPaths.forEach(pathData => {
+    highlightPaths.forEach((pathData) => {
       this.drawingEngine.drawPath(pathData);
     });
   }
@@ -815,5 +826,148 @@ export class AnnotationManager {
     layers.forEach(layer => {
       layer.style.display = hide ? 'none' : '';
     });
+ }
+
+  /**
+   * Re-render stored (non-textbox) annotations onto freshly created annotation layers.
+   * NOTE: Text tool annotations are DOM-only today and are not restorable without a data model.
+   */
+  restoreAnnotationsForTab(tabId) {
+    const pages = this.app.pdfRenderer?.pageElements?.get(tabId);
+    if (!pages || pages.length === 0) return;
+
+    pages.forEach(pageEl => {
+      const layer = pageEl.querySelector('.annotation-layer');
+      if (!layer) return;
+
+      const pageNum = parseInt(layer.dataset.page);
+
+      // 1) Draw tool paths (overlay)
+      const drawPathsByPage = this.drawPaths.get(tabId);
+      const drawPaths = drawPathsByPage?.get(pageNum);
+      if (drawPaths && drawPaths.length > 0) {
+        let canvas = layer.querySelector('.draw-overlay-canvas');
+        if (!canvas) {
+          canvas = document.createElement('canvas');
+          canvas.className = 'draw-overlay-canvas';
+          canvas.width = layer.offsetWidth;
+          canvas.height = layer.offsetHeight;
+          canvas.style.position = 'absolute';
+          canvas.style.top = '0';
+          canvas.style.left = '0';
+          canvas.style.width = `${layer.offsetWidth}px`;
+          canvas.style.height = `${layer.offsetHeight}px`;
+          layer.appendChild(canvas);
+        }
+
+        const denormDrawPaths = drawPaths.map(p => {
+          if (!p || !Array.isArray(p.points) || p.points.length === 0) return p;
+          const first = p.points[0];
+          const isNormalized = p.normalized || (first && typeof first.nx === 'number');
+          if (!isNormalized) return p; // legacy pixel coords
+          return {
+            ...p,
+            points: p.points.map(pt => this.denormalizePoint(pt, layer))
+          };
+        });
+
+        this.redrawPage(canvas, denormDrawPaths);
+      }
+
+      // 2) Freehand highlight paths (non-overlay canvas)
+      const highlightPathsByPage = this.highlightPaths.get(tabId);
+      const highlightPaths = highlightPathsByPage?.get(pageNum);
+      if (highlightPaths && highlightPaths.length > 0) {
+        let canvas = layer.querySelector('canvas:not(.draw-overlay-canvas)');
+        if (!canvas) {
+          canvas = document.createElement('canvas');
+          canvas.width = layer.offsetWidth;
+          canvas.height = layer.offsetHeight;
+          canvas.style.position = 'absolute';
+          canvas.style.top = '0';
+          canvas.style.left = '0';
+          layer.appendChild(canvas);
+        }
+
+        const denormHighlightPaths = highlightPaths.map(p => {
+          if (!p || !Array.isArray(p.points) || p.points.length === 0) return p;
+          const first = p.points[0];
+          const isNormalized = p.normalized || (first && typeof first.nx === 'number');
+          if (!isNormalized) return p; // legacy pixel coords
+          return {
+            ...p,
+            points: p.points.map(pt => this.denormalizePoint(pt, layer))
+          };
+        });
+
+        this.redrawHighlightPaths(canvas, denormHighlightPaths);
+      }
+
+      // 3) Text-selection highlight rectangles (also drawn onto non-overlay canvas)
+      const textHighlightsByPage = this.highlights.get(tabId);
+      const textHighlights = textHighlightsByPage?.get(pageNum);
+      if (textHighlights && textHighlights.length > 0) {
+        let canvas = layer.querySelector('canvas:not(.draw-overlay-canvas)');
+        if (!canvas) {
+          canvas = document.createElement('canvas');
+          canvas.width = layer.offsetWidth;
+          canvas.height = layer.offsetHeight;
+          canvas.style.position = 'absolute';
+          canvas.style.top = '0';
+          canvas.style.left = '0';
+          layer.appendChild(canvas);
+        }
+
+        const denormTextHighlights = textHighlights.map(h => {
+          if (!h || !Array.isArray(h.rects) || h.rects.length === 0) return h;
+          const first = h.rects[0];
+          const isNormalized = h.normalized || (first && typeof first.nx === 'number');
+          if (!isNormalized) return h; // legacy pixel rects
+          return {
+            ...h,
+            rects: h.rects.map(r => this.denormalizeRect(r, layer))
+          };
+        });
+
+        this.redrawTextHighlights(canvas, denormTextHighlights);
+      }
+    });
+  }
+
+  /**
+   * Convert a pixel point into normalized layer-relative coordinates.
+   */
+  normalizePoint(x, y, layer) {
+    const w = layer?.offsetWidth || layer?.clientWidth || 1;
+    const h = layer?.offsetHeight || layer?.clientHeight || 1;
+    return { nx: x / w, ny: y / h };
+  }
+
+  /**
+   * Convert normalized layer-relative coords back to pixels for a given layer.
+   * Backward compatible: if point is already pixel-based, returns it.
+   */
+  denormalizePoint(point, layer) {
+    if (point && typeof point.nx === 'number' && typeof point.ny === 'number') {
+      const w = layer?.offsetWidth || layer?.clientWidth || 1;
+      const h = layer?.offsetHeight || layer?.clientHeight || 1;
+      return { x: point.nx * w, y: point.ny * h };
+    }
+    return { x: point.x, y: point.y };
+  }
+
+  normalizeRect(rect, layer) {
+    const w = layer?.offsetWidth || layer?.clientWidth || 1;
+    const h = layer?.offsetHeight || layer?.clientHeight || 1;
+    return { nx: rect.x / w, ny: rect.y / h, nw: rect.w / w, nh: rect.h / h };
+  }
+
+  denormalizeRect(rect, layer) {
+    if (rect && typeof rect.nx === 'number' && typeof rect.ny === 'number') {
+      const w = layer?.offsetWidth || layer?.clientWidth || 1;
+      const h = layer?.offsetHeight || layer?.clientHeight || 1;
+      return { x: rect.nx * w, y: rect.ny * h, w: rect.nw * w, h: rect.nh * h };
+    }
+    return { x: rect.x, y: rect.y, w: rect.w, h: rect.h };
   }
 }

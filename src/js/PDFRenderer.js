@@ -13,9 +13,7 @@ export class PDFRenderer {
     this.pageElements = new Map();
     this.viewer = document.getElementById('pdf-viewer');
     this.container = document.getElementById('pdf-container');
-
-    // Track which layout the cached pageElements were rendered with per tab.
-    this.renderedLayoutByTab = new Map();
+    this.loading = false;
     
     this.setupScrollListener();
   }
@@ -50,29 +48,33 @@ export class PDFRenderer {
 
     console.log('renderDocument called:', { tabId, pageLayout: tab.pageLayout });
 
-    // Mark what layout we're rendering for this tab so switchToTab can validate cache.
-    const pageLayout = tab.pageLayout || 'single';
-    this.renderedLayoutByTab.set(tabId, pageLayout);
-
     this.viewer.innerHTML = '';
     const pages = [];
 
+    const pageLayout = tab.pageLayout || 'single';
+    
     console.log('Applying page layout:', pageLayout);
     
-    // Apply layout class (CSS owns the layout rules)
+    // Apply layout class
     if (pageLayout === 'two-page') {
       this.viewer.classList.add('two-page-layout');
+      // Explicitly set flex properties for two-page layout
+      this.viewer.style.display = 'flex';
+      this.viewer.style.flexDirection = 'row';
+      this.viewer.style.flexWrap = 'wrap';
+      this.viewer.style.justifyContent = 'center';
+      this.viewer.style.alignItems = 'flex-start';
+      this.viewer.style.gap = '20px';
     } else {
       this.viewer.classList.remove('two-page-layout');
+      // Reset to single page (column) layout
+      this.viewer.style.display = 'flex';
+      this.viewer.style.flexDirection = 'column';
+      this.viewer.style.flexWrap = 'nowrap';
+      this.viewer.style.alignItems = 'center';
+      this.viewer.style.justifyContent = 'flex-start';
+      this.viewer.style.gap = '0';
     }
-
-    // Clear any previously forced inline layout styles
-    this.viewer.style.display = '';
-    this.viewer.style.flexDirection = '';
-    this.viewer.style.flexWrap = '';
-    this.viewer.style.justifyContent = '';
-    this.viewer.style.alignItems = '';
-    this.viewer.style.gap = '';
 
     // Render pages
     for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
@@ -155,13 +157,6 @@ export class PDFRenderer {
     pageContainer.appendChild(canvas);
     pageContainer.appendChild(textLayerDiv);
     pageContainer.appendChild(annotationLayerDiv);
-    
-    // Restore annotations for this page after a short delay to ensure DOM is ready
-    setTimeout(() => {
-      if (this.app.annotationManager) {
-        this.app.annotationManager.restorePageAnnotations(tabId, pageNum, annotationLayerDiv);
-      }
-    }, 50);
 
     return pageContainer;
   }
@@ -190,35 +185,33 @@ export class PDFRenderer {
     // Check if pages are already rendered for this tab
     const existingPages = this.pageElements.get(tabId);
     const tab = this.app.tabManager.getTab(tabId);
-
-    // If cached pages were rendered with a different layout than the tab currently wants,
-    // force a re-render (otherwise stale DOM can make two-page only appear after zoom).
-    const desiredLayout = (tab && tab.pageLayout) ? tab.pageLayout : 'single';
-    const cachedLayout = this.renderedLayoutByTab.get(tabId);
-    const cacheLayoutMismatch = !!(cachedLayout && cachedLayout !== desiredLayout);
-
-    if (existingPages && existingPages.length > 0 && !cacheLayoutMismatch) {
+    
+    if (existingPages && existingPages.length > 0) {
       // Pages already rendered, just show them
       this.viewer.innerHTML = '';
       existingPages.forEach(page => {
         this.viewer.appendChild(page);
       });
       
-      // Apply layout class (CSS owns the layout rules)
+      // Apply layout class
       const pageLayout = tab.pageLayout || 'single';
       if (pageLayout === 'two-page') {
         this.viewer.classList.add('two-page-layout');
+        this.viewer.style.display = 'flex';
+        this.viewer.style.flexDirection = 'row';
+        this.viewer.style.flexWrap = 'wrap';
+        this.viewer.style.justifyContent = 'center';
+        this.viewer.style.alignItems = 'flex-start';
+        this.viewer.style.gap = '20px';
       } else {
         this.viewer.classList.remove('two-page-layout');
+        this.viewer.style.display = 'flex';
+        this.viewer.style.flexDirection = 'column';
+        this.viewer.style.flexWrap = 'nowrap';
+        this.viewer.style.alignItems = 'center';
+        this.viewer.style.justifyContent = 'flex-start';
+        this.viewer.style.gap = '0';
       }
-
-      // Clear any previously forced inline layout styles
-      this.viewer.style.display = '';
-      this.viewer.style.flexDirection = '';
-      this.viewer.style.flexWrap = '';
-      this.viewer.style.justifyContent = '';
-      this.viewer.style.alignItems = '';
-      this.viewer.style.gap = '';
       
       // Restore scroll position after a short delay to ensure DOM is ready
       if (tab && tab.scrollPosition !== undefined) {
@@ -227,19 +220,8 @@ export class PDFRenderer {
         });
       }
     } else {
-      // First time rendering this tab OR cache is stale for the requested layout.
-      // Invalidate cached pages and re-render for the active layout.
-      if (cacheLayoutMismatch) {
-        this.pageElements.set(tabId, []);
-      }
-
-      this.renderDocument(tabId).then(() => {
-        if (tab && tab.scrollPosition !== undefined) {
-          requestAnimationFrame(() => {
-            this.container.scrollTop = tab.scrollPosition;
-          });
-        }
-      });
+      // First time rendering this tab, render all pages
+      this.renderDocument(tabId);
     }
   }
 
@@ -250,7 +232,6 @@ export class PDFRenderer {
     }
     this.documents.delete(tabId);
     this.pageElements.delete(tabId);
-    this.renderedLayoutByTab?.delete(tabId);
   }
 
   getDocument(tabId) {
@@ -292,24 +273,7 @@ export class PDFRenderer {
 
   async setPageLayout(tabId, layout) {
     console.log('setPageLayout called:', { tabId, layout });
-
-    const tab = this.app.tabManager.getTab(tabId);
-    if (!tab) return;
-
-    // Persist layout so renderDocument/switchToTab sees it
-    this.app.tabManager.updateTab(tabId, { pageLayout: layout });
-
-    // Invalidate cached pages: layout changes affect container sizing/flow.
-    this.pageElements.set(tabId, []);
-    this.renderedLayoutByTab.delete(tabId);
-
-    // Keep current page position when re-rendering
-    const currentPage = tab.currentPage || 1;
-
     await this.renderDocument(tabId);
-
-    // Restore the current page after layout change
-    await this.goToPage(tabId, currentPage);
   }
 
   async goToPage(tabId, pageNum) {
@@ -373,180 +337,37 @@ export class PDFRenderer {
   }
 
   async exportPDF(tabId) {
+    // For now, just return the original data
+    // In a real implementation, this would include annotations
     const tab = this.app.tabManager.getTab(tabId);
-    
-    console.log('exportPDF called for tab:', tabId);
-    console.log('Tab object:', tab);
-    console.log('fileData exists?', !!tab?.fileData);
-    console.log('fileData type:', tab?.fileData ? tab.fileData.constructor.name : 'undefined');
-    console.log('fileData size:', tab?.fileData ? tab.fileData.byteLength || tab.fileData.length : 0);
-    
-    if (!tab || !tab.fileData) {
-      console.error('No tab or fileData found for export');
-      return null;
-    }
+    if (!tab || !tab.fileData) return null;
 
-    // Get all annotations for this tab
-    const drawPaths = this.app.annotationManager.drawPaths.get(tabId) || new Map();
-    const highlightPaths = this.app.annotationManager.highlightPaths.get(tabId) || new Map();
-    const highlights = this.app.annotationManager.highlights.get(tabId) || new Map();
-    
-    // Check if there are any annotations
-    const hasAnnotations = drawPaths.size > 0 || highlightPaths.size > 0 || highlights.size > 0;
-    
-    console.log('Has annotations?', hasAnnotations);
-    console.log('Draw paths:', drawPaths.size, 'Highlight paths:', highlightPaths.size, 'Highlights:', highlights.size);
-    console.log('Draw paths Map:', drawPaths);
-    
-    // Count total paths across all pages
-    let totalDrawPaths = 0;
-    drawPaths.forEach((pagePaths) => {
-      totalDrawPaths += pagePaths.length;
-    });
-    console.log('Total draw paths across all pages:', totalDrawPaths);
-    
-    // If no annotations, just return the original file
-    if (!hasAnnotations) {
-      console.log('No annotations, returning original file');
-      if (tab.fileData instanceof Uint8Array) {
-        return tab.fileData;
-      } else if (tab.fileData instanceof ArrayBuffer) {
-        return new Uint8Array(tab.fileData);
-      } else if (Array.isArray(tab.fileData)) {
-        return new Uint8Array(tab.fileData);
-      }
-      return new Uint8Array(tab.fileData);
-    }
+    return Array.from(tab.fileData);
+  }
+
+  async renderCurrentPage() {
+    // Prevent concurrent renders
+    if (this.loading) return;
+    this.loading = true;
 
     try {
-      // Import pdf-lib dynamically
-      const { PDFDocument, rgb } = await import('pdf-lib');
-      
-      // Ensure fileData is a Uint8Array
-      let pdfData;
-      if (tab.fileData instanceof Uint8Array) {
-        pdfData = tab.fileData;
-      } else if (tab.fileData instanceof ArrayBuffer) {
-        pdfData = new Uint8Array(tab.fileData);
-      } else if (Array.isArray(tab.fileData)) {
-        pdfData = new Uint8Array(tab.fileData);
-      } else {
-        console.error('Invalid fileData format:', typeof tab.fileData);
-        return null;
-      }
-      
-      console.log('Loading PDF, data size:', pdfData.byteLength);
-      
-      // Load the original PDF
-      const pdfDoc = await PDFDocument.load(pdfData);
-      const pages = pdfDoc.getPages();
-      
-      console.log('PDF loaded, pages:', pages.length);
-      
-      // Draw annotations on each page
-      for (let pageNum = 1; pageNum <= pages.length; pageNum++) {
-        const page = pages[pageNum - 1];
-        const { width, height } = page.getSize();
-        
-        // Get the page element to extract scale
-        const pageElements = this.pageElements.get(tabId);
-        const pageElement = pageElements ? pageElements[pageNum - 1] : null;
-        const scale = tab.zoom || 1.0;
-        
-        // Draw paths for this page
-        const pagePaths = drawPaths.get(pageNum) || [];
-        console.log(`Page ${pageNum}: Found ${pagePaths.length} draw paths`);
-        pagePaths.forEach((path, pathIndex) => {
-          console.log(`  Path ${pathIndex}:`, { points: path.points?.length, color: path.color, thickness: path.thickness });
-          // Convert canvas coordinates to PDF coordinates
-          const pdfPath = path.points.map(point => ({
-            x: (point.x / scale),
-            y: height - (point.y / scale) // Flip Y axis
-          }));
-          
-          // Get RGB color
-          const rgbColor = this.hexToRgbValues(path.color);
-          
-          // Draw lines between points
-          for (let i = 0; i < pdfPath.length - 1; i++) {
-            page.drawLine({
-              start: { x: pdfPath[i].x, y: pdfPath[i].y },
-              end: { x: pdfPath[i + 1].x, y: pdfPath[i + 1].y },
-              thickness: path.thickness / scale,
-              color: rgb(rgbColor.r, rgbColor.g, rgbColor.b),
-              opacity: 1
-            });
-          }
-        });
-        
-        // Draw highlight paths for this page
-        const pageHighlights = highlightPaths.get(pageNum) || [];
-        pageHighlights.forEach(highlight => {
-          const pdfPath = highlight.points.map(point => ({
-            x: (point.x / scale),
-            y: height - (point.y / scale)
-          }));
-          
-          // Get RGB color
-          const rgbColor = this.hexToRgbValues(highlight.color);
-          
-          for (let i = 0; i < pdfPath.length - 1; i++) {
-            page.drawLine({
-              start: { x: pdfPath[i].x, y: pdfPath[i].y },
-              end: { x: pdfPath[i + 1].x, y: pdfPath[i + 1].y },
-              thickness: highlight.thickness / scale,
-              color: rgb(rgbColor.r, rgbColor.g, rgbColor.b),
-              opacity: 0.4
-            });
-          }
-        });
-        
-        // Draw text-selection highlights for this page
-        const pageTextHighlights = highlights.get(pageNum) || [];
-        pageTextHighlights.forEach(highlight => {
-          // Get RGB color
-          const rgbColor = this.hexToRgbValues(highlight.color);
-          
-          page.drawRectangle({
-            x: highlight.x / scale,
-            y: height - (highlight.y + highlight.height) / scale,
-            width: highlight.width / scale,
-            height: highlight.height / scale,
-            color: rgb(rgbColor.r, rgbColor.g, rgbColor.b),
-            opacity: 0.4
-          });
-        });
-      }
-      
-      // Save the PDF and return as Uint8Array
-      const pdfBytes = await pdfDoc.save();
-      console.log('PDF saved, output size:', pdfBytes.byteLength);
-      return pdfBytes; // Return Uint8Array directly
-      
-    } catch (error) {
-      console.error('Error exporting PDF with annotations:', error);
-      // Fallback: return original data as Uint8Array
-      if (tab.fileData instanceof Uint8Array) {
-        return tab.fileData;
-      } else if (tab.fileData instanceof ArrayBuffer) {
-        return new Uint8Array(tab.fileData);
-      } else if (Array.isArray(tab.fileData)) {
-        return new Uint8Array(tab.fileData);
-      }
-      return new Uint8Array(tab.fileData);
+      const tabId = this.app.tabManager.getActiveTabId();
+      const tab = this.app.tabManager.getTab(tabId);
+      if (!tab) return;
+
+      const doc = this.documents.get(tabId);
+      if (!doc) return;
+
+      const pageNum = tab.currentPage || 1;
+      const pageContainer = await this.createPageContainer(doc, pageNum, tabId);
+
+      this.viewer.innerHTML = '';
+      this.viewer.appendChild(pageContainer);
+
+      // Update scroll position
+      this.container.scrollTop = tab.scrollPosition || 0;
+    } finally {
+      this.loading = false;
     }
-  }
-  
-  /**
-   * Convert hex color to RGB object for pdf-lib
-   * Returns { r, g, b } with values 0-1
-   */
-  hexToRgbValues(hex) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16) / 255,
-      g: parseInt(result[2], 16) / 255,
-      b: parseInt(result[3], 16) / 255
-    } : { r: 0, g: 0, b: 0 };
   }
 }

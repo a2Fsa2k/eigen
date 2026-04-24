@@ -286,6 +286,14 @@ body.dark-mode .toolbar-btn img {
   object-fit: contain;
 }
 
+/* AI chat icon sizing */
+#btn-ai-chat img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
 /* Special handling for zoom-out icon (minus sign) */
 #btn-zoom-out img {
   width: 20px !important;
@@ -642,66 +650,6 @@ body.dark-mode .pdf-container {
   position: absolute;
   left: 0;
   top: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-  opacity: 0.2;
-  line-height: 1;
-}
-
-.text-layer > span {
-  color: transparent;
-  position: absolute;
-  white-space: pre;
-  cursor: text;
-  transform-origin: 0% 0%;
-}
-
-.text-layer ::selection {
-  background: rgba(0, 0, 0, 0);
-}
-
-.text-layer span::selection {
-  background: rgba(0, 0, 0, 0);
-}
-
-/* Text Selection Highlight */
-.selection-overlay {
-  z-index: 10;
-}
-
-/* Notification Styles */
-.notification {
-  animation: slideIn 0.3s ease-out forwards;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(400px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.notification-success {
-  background: #51cf66;
-}
-
-.notification-error {
-  background: #ff6b6b;
-}
-
-.notification-info {
-  background: #4a9eff;
-}
-
-.text-layer {
-  position: absolute;
-  left: 0;
-  top: 0;
   width: 100%;
   height: 100%;
   pointer-events: auto;
@@ -733,23 +681,20 @@ body.dark-mode .pdf-container {
 }
 
 .two-page-layout {
-  display: grid !important;
-  grid-template-columns: auto auto !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
   justify-content: center !important;
-  align-items: start !important;
-  column-gap: 20px !important;
-  row-gap: 20px !important;
+  gap: 20px !important;
 }
 
 .two-page-layout .page-container {
-  /* Keep natural size from JS (width/height set on element) */
-  margin: 0 !important;
-  justify-self: center;
-}
-
-/* Disable old flex-row-break hacks (no effect in grid, but keep safe) */
-.two-page-layout .page-container:nth-child(2n)::after {
-  content: none !important;
+  display: inline-block !important;
+  margin: 10px !important;
+  vertical-align: top;
+  flex: 0 0 auto;
+  max-width: calc(50% - 30px);
 }
 
 /* Popovers */
@@ -1333,33 +1278,43 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #ffffff;
+  background: #4a9eff;
   cursor: pointer;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+  border: none;
+  transition: all 0.2s;
+}
+
+.highlight-popover .thickness-slider::-webkit-slider-thumb:hover {
+  background: #6ab0ff;
+  transform: scale(1.1);
 }
 
 .highlight-popover .thickness-slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #ffffff;
+  background: #4a9eff;
   cursor: pointer;
   border: none;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+  transition: all 0.2s;
+}
+
+.highlight-popover .thickness-slider::-moz-range-thumb:hover {
+  background: #6ab0ff;
+  transform: scale(1.1);
 }
 
 .highlight-popover .thickness-slider-labels {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #e0e0e0;
-  opacity: 0.85;
+  color: #aaa;
   margin-top: 2px;
 }
 
 .highlight-popover .divider {
   height: 1px;
-  background: rgba(255,255,255,0.15);
+  background: #555;
   border: none;
   margin: 16px 0;
 }
@@ -1416,6 +1371,15 @@ body.dark-mode .highlight-popover .color-swatch.selected {
 }
 body.dark-mode .highlight-popover .divider {
   background: #222;
+}
+
+.text-layer span::selection {
+  background: #cce6ff80 !important;
+  border-radius: 3px;
+}
+.text-layer span::-moz-selection {
+  background: #cce6ff80 !important;
+  border-radius: 3px;
 }
 
 /* Draw Tool Dropdown */
@@ -1478,6 +1442,11 @@ body.dark-mode .highlight-popover .divider {
 .color-swatch.active {
   border-color: #4a9eff;
   box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.3);
+}
+
+.color-swatch:focus {
+  outline: none;
+  border-color: #4a9eff;
 }
 
 /* Thickness Slider */
@@ -1880,236 +1849,161 @@ body.text-tool-active #pdf-container {
   cursor: text !important;
 }
 
-/* Text Selection Styles */
-.selection-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  cursor: text;
+/* ==================== AI Chat Panel ==================== */
+.ai-chat-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 9000;
 }
 
-.text-layer {
-  position: absolute;
-  left: 0;
+.ai-chat-panel {
+  position: fixed;
   top: 0;
   right: 0;
-  bottom: 0;
-  overflow: hidden;
-  opacity: 0.2;
-  line-height: 1;
+  height: 100vh;
+  width: 360px;
+  max-width: min(420px, 92vw);
+  background: var(--toolbar-bg-light);
+  border-left: 1px solid var(--border-light);
+  z-index: 9001;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.22s ease;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);
 }
 
-.text-layer > span {
-  color: transparent;
-  position: absolute;
-  white-space: pre;
-  cursor: text;
-  transform-origin: 0% 0%;
+body.dark-mode .ai-chat-panel {
+  background: var(--toolbar-bg-dark);
+  border-left-color: var(--border-dark);
 }
 
-.text-layer ::selection {
-  background: rgba(0, 0, 0, 0);
+.ai-chat-panel.open {
+  transform: translateX(0);
 }
 
-.text-layer span::selection {
-  background: rgba(0, 0, 0, 0);
+.ai-chat-header {
+  height: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border-light);
 }
 
-/* Text Selection Highlight */
-.selection-overlay {
-  z-index: 10;
+body.dark-mode .ai-chat-header {
+  border-bottom-color: var(--border-dark);
 }
 
-/* Notification Styles */
-.notification {
-  animation: slideIn 0.3s ease-out forwards;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(400px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.notification-success {
-  background: #51cf66;
-}
-
-.notification-error {
-  background: #ff6b6b;
-}
-
-.notification-info {
-  background: #4a9eff;
-}
-
-/* Print Optimization */
-@media print {
-  @page {
-    margin: 0;
-  }
-
-  /* Hide UI elements that shouldn't be printed */
-  .toolbar,
-  #tabs-bar,
-  .tabs-bar,
-  .tabs-container,
-  .sidebar,
-  .sidebar-header,
-  .sidebar-modes,
-  .sidebar-content,
-  #sidebar,
-  .tab-bar,
-  .drawing-toolbar,
-  .text-formatting-toolbar,
-  .popover,
-  .modal,
-  .search-bar,
-  #btn-open-file,
-  .empty-state {
-    display: none !important;
-  }
-
-  /* Reset layout for printing to let the browser handle pages natively */
-  body, html, #app, .content-area, .pdf-container, .pdf-viewer, #pdf-container, #pdf-viewer {
-    height: auto !important;
-    width: 100% !important;
-    overflow: visible !important;
-    background: white !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    position: static !important;
-    display: block !important;
-  }
-
-  /* Ensure pages are stacked and visible clearly */
-  .page-container {
-    margin: 0 0 10mm 0 !important;
-    box-shadow: none !important;
-    page-break-after: always !important;
-    position: relative !important;
-    border: none !important;
-    display: block !important;
-
-    /* Don't force full-width: it stretches the canvas and changes aspect */
-    width: auto !important;
-    max-width: none !important;
-  }
-
-  /* Keep the PDF canvas at its own size (set by JS) */
-  canvas.pdf-page {
-    width: auto !important;
-    height: auto !important;
-    max-width: none !important;
-    max-height: none !important;
-    display: block;
-  }
-
-  /* Make canvas and annotations align using the page-container's box */
-  .pdf-page, .annotation-layer, .draw-overlay-canvas {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: auto !important;
-    height: auto !important;
-    max-width: none !important;
-  }
-  
-  /* Hide the minimal text layer completely for print since we only want to print visual content + annotations */
-  .text-layer {
-    display: none !important; 
-  }
-}
-
-/* Highlight popover (derive from draw-tool-dropdown theme) */
-.popover.popover-highlight {
-  /* match draw-tool-dropdown */
-  background: #2a2a2a;
-  border: 1px solid #555;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-
-  /* compact like draw dropdown */
-  width: 240px;
-  padding: 16px;
-}
-
-.popover.popover-highlight .popover-header {
-  /* similar to draw-tool-label, but keep title case */
-  font-size: 16px;
+.ai-chat-title {
+  font-size: 13px;
   font-weight: 600;
-  color: #e0e0e0;
-  margin-bottom: 10px;
 }
 
-.popover.popover-highlight .popover-section {
-  margin-top: 14px;
-}
-
-.color-grid.color-grid-circles .color-swatch {
-  width: 32px;
-  height: 32px;
-}
-
-.color-grid.color-grid-circles {
-  gap: 10px;
-}
-
-/* Selected state aligned with draw-tool palette accent */
-.color-grid.color-grid-circles .color-swatch.selected::after {
-  inset: -4px;
-  border-width: 2px;
-  border-color: #4a9eff;
-  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.3);
-}
-
-.highlight-preview {
-  height: 62px;
-  margin: 12px 0 0;
-}
-
-.highlight-preview-stroke {
-  height: 52px;
-  filter: none;
-}
-
-.highlight-thickness-title {
+.ai-chat-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
   font-size: 16px;
-  font-weight: 600;
-  margin: 8px 0 8px;
-}
-
-.icon-btn {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1px solid #666;
-  color: #e0e0e0;
-  opacity: 0.75;
-}
-
-/* Highlight preview now uses SVG path */
-.popover.popover-highlight .highlight-preview {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-light);
 }
 
-.highlight-preview-svg {
-  width: 100%;
-  height: 64px;
-  display: block;
+body.dark-mode .ai-chat-close {
+  color: var(--text-dark);
 }
 
-/* Ensure slider labels are on opposite ends */
-.popover.popover-highlight .slider-labels {
+.ai-chat-close:hover {
+  background: var(--hover-light);
+}
+
+body.dark-mode .ai-chat-close:hover {
+  background: var(--hover-dark);
+}
+
+.ai-chat-messages {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
   display: flex;
-  justify-content: space-between;
-  width: 100%;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-chat-bubble {
+  max-width: 92%;
+  padding: 10px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ai-chat-bubble.user {
+  align-self: flex-end;
+  background: #0078d4;
+  color: #fff;
+}
+
+.ai-chat-bubble.assistant {
+  align-self: flex-start;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-light);
+}
+
+body.dark-mode .ai-chat-bubble.assistant {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-dark);
+}
+
+.ai-chat-input {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--border-light);
+}
+
+body.dark-mode .ai-chat-input {
+  border-top-color: var(--border-dark);
+}
+
+#ai-chat-text {
+  flex: 1;
+  height: 34px;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 13px;
+  background: white;
+  color: var(--text-light);
+}
+
+body.dark-mode #ai-chat-text {
+  background: #2a2a2a;
+  border-color: var(--border-dark);
+  color: var(--text-dark);
+}
+
+#ai-chat-send {
+  height: 34px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 6px;
+  background: #0078d4;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#ai-chat-send:hover {
+  background: #0064b3;
 }

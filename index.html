@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF Editor</title>
-  <!-- Favicon: place eigen-logo-removebg-preview.png at the project root or public folder -->
-  <link rel="icon" href="/eigen-logo-removebg-preview.png" type="image/png">
   <link rel="stylesheet" href="/src/styles/main.css">
 </head>
 <body>
@@ -26,7 +24,7 @@
         <div class="toolbar-divider"></div>
         <div class="toolbar-btn-group">
           <button class="toolbar-btn tool-btn" id="btn-highlight" title="Highlight" data-tool="highlight">
-            <img src="/src/icons/left/3_tool_draw.png" alt="Highlight" />
+            <img src="/src/icons/left/2_tool_highlight.png" alt="Highlight" />
           </button>
           <button class="toolbar-btn-arrow" id="btn-highlight-arrow" title="Highlight Options" data-tool="highlight">
             <span>▼</span>
@@ -34,7 +32,7 @@
         </div>
         <div class="toolbar-btn-group">
           <button class="toolbar-btn tool-btn" id="btn-draw" title="Draw" data-tool="draw">
-            <img src="/src/icons/left/2_tool_highlight.png" alt="Draw" />
+            <img src="/src/icons/left/3_tool_draw.png" alt="Draw" />
           </button>
           <button class="toolbar-btn-arrow" id="btn-draw-arrow" title="Draw Options" data-tool="draw">
             <span>▼</span>
@@ -77,6 +75,9 @@
 
       <!-- Right Group -->
       <div class="toolbar-group toolbar-right">
+        <button class="toolbar-btn" id="btn-ai-chat" title="AI Chat">
+          <img src="/src/icons/right/0_ai_chat.png" alt="AI Chat" />
+        </button>
         <button class="toolbar-btn" id="btn-search" title="Search (Ctrl+F)">
           <img src="/src/icons/right/11_doc_search.png" alt="Search" />
         </button>
@@ -138,40 +139,30 @@
       </div>
     </div>
 
-    <div id="popover-highlight" class="popover popover-highlight" style="display: none;">
-      <div class="popover-header">Colours</div>
-
-      <div class="popover-section" style="margin-top: 10px;">
-        <div class="color-grid color-grid-circles" id="highlight-color-grid"></div>
-      </div>
-
-      <div class="highlight-preview" aria-hidden="true">
-        <svg id="highlight-preview-svg" class="highlight-preview-svg" viewBox="0 0 260 80" preserveAspectRatio="none">
-          <path id="highlight-preview-path" d="M10,55 C45,20 75,20 110,50 S175,85 240,35" fill="none" stroke="#FFFF00" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </div>
-
-      <div class="popover-section highlight-thickness-section">
-        <div class="highlight-thickness-title">
-          <span>Thickness</span>
-          <button type="button" class="icon-btn" id="highlight-thickness-info" aria-label="Thickness info">i</button>
-        </div>
-
-        <input class="slider" type="range" id="highlight-thickness" min="5" max="30" value="15" />
-        <div class="slider-labels">
-          <span>Thin</span>
-          <span>Thick</span>
+    <div id="popover-highlight" class="popover highlight-popover" style="display: none;">
+      <div class="popover-section">
+        <div class="popover-section-title">Colours</div>
+        <div class="color-swatch-row" id="highlight-color-row">
+          <!-- Swatches will be injected by JS -->
         </div>
       </div>
-
-      <div class="settings-divider"></div>
-
-      <div class="popover-section highlight-toggle-row">
+      <div class="highlight-stroke-preview">
+        <canvas id="highlight-stroke-canvas" class="highlight-stroke-canvas" width="90" height="24"></canvas>
+      </div>
+      <div class="thickness-section">
+        <div class="thickness-label-row">
+          Thickness <span class="info-icon" title="Thickness applies to future highlights only">ⓘ</span>
+        </div>
+        <div class="thickness-slider-row">
+          <span style="font-size:12px;color:#aaa;">Thin</span>
+          <input type="range" id="highlight-thickness-slider" class="thickness-slider" min="10" max="30" value="20" />
+          <span style="font-size:12px;color:#aaa;">Thick</span>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="toggle-row">
         <span>Text only highlight</span>
-        <label class="switch" title="Text only highlight">
-          <input type="checkbox" id="highlight-text-only" />
-          <span class="switch-slider"></span>
-        </label>
+        <div id="highlight-text-toggle" class="toggle-switch"><div class="toggle-knob"></div></div>
       </div>
     </div>
 
@@ -321,6 +312,21 @@
         </div>
       </div>
     </div>
+
+    <!-- AI Chat Panel (slides in from the right) -->
+    <div id="ai-chat-overlay" class="ai-chat-overlay" style="display: none;"></div>
+    <aside id="ai-chat-panel" class="ai-chat-panel" aria-hidden="true">
+      <div class="ai-chat-header">
+        <div class="ai-chat-title">AI Chat</div>
+        <button id="btn-ai-chat-close" class="ai-chat-close" title="Close">✕</button>
+      </div>
+      <div id="ai-chat-messages" class="ai-chat-messages" aria-live="polite"></div>
+      <form id="ai-chat-form" class="ai-chat-input" autocomplete="off">
+        <input id="ai-chat-text" type="text" placeholder="Ask about this document..." />
+        <button id="ai-chat-send" type="submit">Send</button>
+      </form>
+    </aside>
+
   </div>
 
   <script type="module" src="/src/main.js"></script>

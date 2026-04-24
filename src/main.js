@@ -5,7 +5,7 @@ import { PDFRenderer } from './js/PDFRenderer.js';
 import { AnnotationManager } from './js/AnnotationManager.js';
 import { SearchManager } from './js/SearchManager.js';
 import { SettingsManager } from './js/SettingsManager.js';
-import { TextSelectionManager } from './js/TextSelectionManager.js';
+import { AIChatPanel } from './js/AIChatPanel.js';
 
 class PDFEditor {
   constructor() {
@@ -16,7 +16,7 @@ class PDFEditor {
     this.annotationManager = new AnnotationManager(this);
     this.searchManager = new SearchManager(this);
     this.settingsManager = new SettingsManager(this);
-    this.textSelectionManager = new TextSelectionManager(this);
+    this.aiChatPanel = new AIChatPanel(this);
 
     this.init();
     this.toolbar.setupPopovers(); // <-- Call popover setup after all managers are initialized
@@ -228,30 +228,9 @@ class PDFEditor {
     }
 
     const tab = this.tabManager.getTab(tabId);
-    
-    // Create a proper copy of the data to avoid detached buffer issues
-    // CRITICAL: pdf.js will DETACH the ArrayBuffer we pass to it!
-    // We MUST create TWO separate copies: one for pdf.js, one for us to keep
-    const sourceData = Array.isArray(file.data) ? file.data : Array.from(new Uint8Array(file.data));
-    
-    // Copy 1: For our storage (this one we keep forever)
-    const ourBuffer = new ArrayBuffer(sourceData.length);
-    const ourView = new Uint8Array(ourBuffer);
-    ourView.set(sourceData);
-    tab.fileData = ourView;
-    
-    // Copy 2: For pdf.js to consume (this one will get detached)
-    const pdfjsBuffer = new ArrayBuffer(sourceData.length);
-    const pdfjsView = new Uint8Array(pdfjsBuffer);
-    pdfjsView.set(sourceData);
-    
-    console.log('loadPDF: Storing fileData, size:', tab.fileData.byteLength);
+    tab.fileData = new Uint8Array(file.data);
 
-    await this.pdfRenderer.loadDocument(pdfjsView, tabId);
-    
-    // Verify fileData is still intact after pdf.js loads it
-    console.log('loadPDF: After pdf.js load, fileData size:', tab.fileData.byteLength);
-    
+    await this.pdfRenderer.loadDocument(tab.fileData, tabId);
     // updateUI() is now called from loadDocument() right after the document is loaded
   }
 

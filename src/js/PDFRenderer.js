@@ -14,7 +14,8 @@ export class PDFRenderer {
     this.viewer = document.getElementById('pdf-viewer');
     this.container = document.getElementById('pdf-container');
     this.loading = false;
-    
+    this._renderToken = 0;
+
     this.setupScrollListener();
   }
 
@@ -45,6 +46,8 @@ export class PDFRenderer {
 
     const tab = this.app.tabManager.getTab(tabId);
     if (!tab) return;
+
+    const token = ++this._renderToken;
 
     console.log('renderDocument called:', { tabId, pageLayout: tab.pageLayout });
 
@@ -79,9 +82,22 @@ export class PDFRenderer {
     // Render pages
     for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
       const pageContainer = await this.createPageContainer(doc, pageNum, tabId);
+
+      // If a newer render started (e.g. rapid zoom/rotate/layout), ignore this stale completion.
+      if (token !== this._renderToken) return;
+
       pages.push(pageContainer);
-      this.viewer.appendChild(pageContainer);
     }
+
+    // Deterministic ordering guard: ensure pages are in numeric order even if anything appended out-of-order.
+    pages.sort((a, b) => {
+      const pa = Number(a?.dataset?.page || 0);
+      const pb = Number(b?.dataset?.page || 0);
+      return pa - pb;
+    });
+
+    // Append in sorted order
+    pages.forEach(p => this.viewer.appendChild(p));
 
     this.pageElements.set(tabId, pages);
 

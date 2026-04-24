@@ -836,6 +836,9 @@ export class AnnotationManager {
     const pages = this.app.pdfRenderer?.pageElements?.get(tabId);
     if (!pages || pages.length === 0) return;
 
+    const tab = this.app.tabManager?.getTab(tabId);
+    const rotationDeg = tab?.rotation || 0;
+
     pages.forEach(pageEl => {
       const layer = pageEl.querySelector('.annotation-layer');
       if (!layer) return;
@@ -867,7 +870,7 @@ export class AnnotationManager {
           if (!isNormalized) return p; // legacy pixel coords
           return {
             ...p,
-            points: p.points.map(pt => this.denormalizePoint(pt, layer))
+            points: p.points.map(pt => this.denormalizePoint(pt, layer, rotationDeg))
           };
         });
 
@@ -896,7 +899,7 @@ export class AnnotationManager {
           if (!isNormalized) return p; // legacy pixel coords
           return {
             ...p,
-            points: p.points.map(pt => this.denormalizePoint(pt, layer))
+            points: p.points.map(pt => this.denormalizePoint(pt, layer, rotationDeg))
           };
         });
 
@@ -925,7 +928,7 @@ export class AnnotationManager {
           if (!isNormalized) return h; // legacy pixel rects
           return {
             ...h,
-            rects: h.rects.map(r => this.denormalizeRect(r, layer))
+            rects: h.rects.map(r => this.denormalizeRect(r, layer, rotationDeg))
           };
         });
 
@@ -935,39 +938,68 @@ export class AnnotationManager {
   }
 
   /**
+   * Rotate a normalized point (nx, ny) by clockwise degrees (0/90/180/270).
+   */
+  rotateNormalizedPoint(nx, ny, rotationDeg) {
+    const rot = ((rotationDeg % 360) + 360) % 360;
+    switch (rot) {
+      case 90:
+        return { nx: 1 - ny, ny: nx };
+      case 180:
+        return { nx: 1 - nx, ny: 1 - ny };
+      case 270:
+        return { nx: ny, ny: 1 - nx };
+      case 0:
+      default:
+        return { nx, ny };
+    }
+  }
+
+  /**
+   * Convert a normalized layer-relative point to pixels for a given layer, applying rotation.
+   * Backward compatible: if point is already pixel-based, returns it.
+   */
+  denormalizePoint(point, layer, rotationDeg = 0) {
+    if (point && typeof point.nx === 'number' && typeof point.ny === 'number') {
+      const rotated = this.rotateNormalizedPoint(point.nx, point.ny, rotationDeg);
+      const w = layer?.offsetWidth || layer?.clientWidth || 1;
+      const h = layer?.offsetHeight || layer?.clientHeight || 1;
+      return { x: rotated.nx * w, y: rotated.ny * h };
+    }
+    return { x: point.x, y: point.y };
+  }
+
+  /**
+   * Convert a normalized rect to pixels for a given layer, applying rotation by rotating corners then bounding-box.
+   * Backward compatible: if rect is already pixel-based, returns it.
+   */
+  denormalizeRect(rect, layer, rotationDeg = 0) {
+    if (rect && typeof rect.nx === 'number' && typeof rect.ny === 'number') {
+      const corners = [
+        { nx: rect.nx, ny: rect.ny },
+        { nx: rect.nx + rect.nw, ny: rect.ny },
+        { nx: rect.nx, ny: rect.ny + rect.nh },
+        { nx: rect.nx + rect.nw, ny: rect.ny + rect.nh }
+      ].map(p => this.rotateNormalizedPoint(p.nx, p.ny, rotationDeg));
+
+      const minX = Math.min(...corners.map(p => p.nx));
+      const maxX = Math.max(...corners.map(p => p.nx));
+      const minY = Math.min(...corners.map(p => p.ny));
+      const maxY = Math.max(...corners.map(p => p.ny));
+
+      const w = layer?.offsetWidth || layer?.clientWidth || 1;
+      const h = layer?.offsetHeight || layer?.clientHeight || 1;
+      return { x: minX * w, y: minY * h, w: (maxX - minX) * w, h: (maxY - minY) * h };
+    }
+    return { x: rect.x, y: rect.y, w: rect.w, h: rect.h };
+  }
+
+  /**
    * Convert a pixel point into normalized layer-relative coordinates.
    */
   normalizePoint(x, y, layer) {
     const w = layer?.offsetWidth || layer?.clientWidth || 1;
     const h = layer?.offsetHeight || layer?.clientHeight || 1;
     return { nx: x / w, ny: y / h };
-  }
-
-  /**
-   * Convert normalized layer-relative coords back to pixels for a given layer.
-   * Backward compatible: if point is already pixel-based, returns it.
-   */
-  denormalizePoint(point, layer) {
-    if (point && typeof point.nx === 'number' && typeof point.ny === 'number') {
-      const w = layer?.offsetWidth || layer?.clientWidth || 1;
-      const h = layer?.offsetHeight || layer?.clientHeight || 1;
-      return { x: point.nx * w, y: point.ny * h };
-    }
-    return { x: point.x, y: point.y };
-  }
-
-  normalizeRect(rect, layer) {
-    const w = layer?.offsetWidth || layer?.clientWidth || 1;
-    const h = layer?.offsetHeight || layer?.clientHeight || 1;
-    return { nx: rect.x / w, ny: rect.y / h, nw: rect.w / w, nh: rect.h / h };
-  }
-
-  denormalizeRect(rect, layer) {
-    if (rect && typeof rect.nx === 'number' && typeof rect.ny === 'number') {
-      const w = layer?.offsetWidth || layer?.clientWidth || 1;
-      const h = layer?.offsetHeight || layer?.clientHeight || 1;
-      return { x: rect.nx * w, y: rect.ny * h, w: rect.nw * w, h: rect.nh * h };
-    }
-    return { x: rect.x, y: rect.y, w: rect.w, h: rect.h };
   }
 }

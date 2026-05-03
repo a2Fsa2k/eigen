@@ -1,0 +1,831 @@
+[
+  {
+    "page": 1,
+    "raw": "Mock Research Document for PDF Extraction\nTesting\nOmkar Patil1, Alex Chen2\n1Independent Researcher    2Data Systems Lab\nAbstract \u2014 This mock document contains common formatting structures encountered in research\npapers and technical documents. It includes headings, lists, tables, pseudo twoIcolumn layouts,\nfootnotes, code blocks, captions, and mixed text styles. The goal is to evaluate how well document\nparsers and OCR pipelines preserve logical reading order and structure for downstream RAG\npipelines.\n1. Introduction\nModern retrievalIaugmented generation (RAG) systems depend heavily on reliable document\nparsing. However, PDFs often contain complex layouts such as multiIcolumn text, tables,\nmathematical expressions, and captions. Incorrect ordering during extraction can lead to corrupted\nsemantic chunks.\n2. Background\nPDFs are primarily designed for visual fidelity rather\nthan semantic structure. Libraries often rely on\npositional heuristics to infer reading order.\nChallenges include:\n1\nMultiIcolumn layouts\n2\nFigures with captions\n3\nTables with merged cells\n4\nFootnotes and references\n3. Typical Parsing Pipeline\nA common pipeline for RAG ingestion consists of the\nfollowing stages:\n1\nPDF text extraction\n2\nLayout reconstruction\n3\nSemantic chunking\n4\nEmbedding generation\n5\nVector database indexing\nTable 1: Example Structured Data\nModel\nParameters\nYear\nNotes\nGPTI3\n175B\n2020\nLarge language model\nBERT\n340M\n2018\nBidirectional transformer\nResNetI50\n25M\n2015\nComputer vision CNN\nFigure 1: Example diagram placeholder. In real documents, figures may appear between\nparagraphs and disrupt reading order during naive extraction.\nCode Example\ndef chunk_document(text, chunk_size=500):\n    words = text.split()",
+    "blocks": [
+      [
+        {
+          "text": "Mock Research Document for PDF Extraction",
+          "font_size": 18.0,
+          "bold": true,
+          "bbox": [
+            103.5978012084961,
+            76.73999786376953,
+            491.6777648925781,
+            101.5260009765625
+          ]
+        },
+        {
+          "text": "Testing",
+          "font_size": 18.0,
+          "bold": true,
+          "bbox": [
+            265.6337890625,
+            98.73999786376953,
+            329.64178466796875,
+            123.5260009765625
+          ]
+        }
+      ],
+      [
+        {
+          "text": "Omkar Patil 1 , Alex Chen 2",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            136.39999389648438,
+            190.8159942626953,
+            152.99000549316406
+          ]
+        },
+        {
+          "text": "1 Independent Researcher     2 Data Systems Lab",
+          "font_size": 8.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            148.39999389648438,
+            289.7759704589844,
+            164.99000549316406
+          ]
+        }
+      ],
+      [
+        {
+          "text": "Abstract \u2014  This mock document contains common formatting structures encountered in research",
+          "font_size": 10.0,
+          "bold": true,
+          "bbox": [
+            78.0,
+            181.25,
+            512.0398559570312,
+            195.07000732421875
+          ]
+        },
+        {
+          "text": "papers and technical documents. It includes headings, lists, tables, pseudo two I column layouts,",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            193.25,
+            504.69989013671875,
+            206.99000549316406
+          ]
+        },
+        {
+          "text": "footnotes, code blocks, captions, and mixed text styles. The goal is to evaluate how well document",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            205.25,
+            513.2098999023438,
+            218.99000549316406
+          ]
+        },
+        {
+          "text": "parsers and OCR pipelines preserve logical reading order and structure for downstream RAG",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            217.25,
+            490.3699035644531,
+            230.99000549316406
+          ]
+        },
+        {
+          "text": "pipelines.",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            229.25,
+            120.24000549316406,
+            242.99000549316406
+          ]
+        }
+      ],
+      [
+        {
+          "text": "1. Introduction",
+          "font_size": 14.0,
+          "bold": true,
+          "bbox": [
+            78.0,
+            273.0199890136719,
+            175.23001098632812,
+            292.2980041503906
+          ]
+        }
+      ],
+      [
+        {
+          "text": "Modern retrieval I augmented generation (RAG) systems depend heavily on reliable document",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            297.2499694824219,
+            494.1098937988281,
+            310.9899597167969
+          ]
+        },
+        {
+          "text": "parsing. However, PDFs often contain complex layouts such as multi I column text, tables,",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            309.2499694824219,
+            475.7598876953125,
+            322.9899597167969
+          ]
+        },
+        {
+          "text": "mathematical expressions, and captions. Incorrect ordering during extraction can lead to corrupted",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            321.2499694824219,
+            513.1898803710938,
+            334.9899597167969
+          ]
+        },
+        {
+          "text": "semantic chunks.",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            333.2499694824219,
+            155.25,
+            346.9899597167969
+          ]
+        }
+      ],
+      [
+        {
+          "text": "2. Background",
+          "font_size": 14.0,
+          "bold": true,
+          "bbox": [
+            48.519691467285156,
+            368.0199890136719,
+            145.76368713378906,
+            387.2980041503906
+          ]
+        }
+      ],
+      [
+        {
+          "text": "PDFs are primarily designed for visual fidelity rather",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            48.519691467285156,
+            398.25,
+            277.46966552734375,
+            411.989990234375
+          ]
+        },
+        {
+          "text": "than semantic structure. Libraries often rely on",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            48.519691467285156,
+            410.25,
+            254.15966796875,
+            423.989990234375
+          ]
+        },
+        {
+          "text": "positional heuristics to infer reading order.",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            48.519691467285156,
+            422.25,
+            234.14968872070312,
+            435.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "Challenges include:",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            48.519691467285156,
+            440.25,
+            135.77969360351562,
+            453.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "1",
+          "font_size": 12.0,
+          "bold": false,
+          "bbox": [
+            48.519691467285156,
+            458.1000061035156,
+            55.19169235229492,
+            474.5880126953125
+          ]
+        },
+        {
+          "text": "Multi I column layouts",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            66.51969146728516,
+            458.25,
+            161.9296875,
+            471.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "2",
+          "font_size": 12.0,
+          "bold": false,
+          "bbox": [
+            48.519691467285156,
+            476.1000061035156,
+            55.19169235229492,
+            492.5880126953125
+          ]
+        },
+        {
+          "text": "Figures with captions",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            66.51969146728516,
+            476.25,
+            160.43968200683594,
+            489.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "3",
+          "font_size": 12.0,
+          "bold": false,
+          "bbox": [
+            48.519691467285156,
+            494.1000061035156,
+            55.19169235229492,
+            510.5880126953125
+          ]
+        },
+        {
+          "text": "Tables with merged cells",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            66.51969146728516,
+            494.25,
+            176.5496826171875,
+            507.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "4",
+          "font_size": 12.0,
+          "bold": false,
+          "bbox": [
+            48.519691467285156,
+            512.0999755859375,
+            55.19169235229492,
+            528.5880126953125
+          ]
+        },
+        {
+          "text": "Footnotes and references",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            66.51969146728516,
+            512.25,
+            180.46969604492188,
+            525.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "3. Typical Parsing Pipeline",
+          "font_size": 14.0,
+          "bold": true,
+          "bbox": [
+            303.6377868652344,
+            368.0199890136719,
+            480.2757873535156,
+            387.2980041503906
+          ]
+        }
+      ],
+      [
+        {
+          "text": "A common pipeline for RAG ingestion consists of the",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            303.6377868652344,
+            398.25,
+            537.0677490234375,
+            411.989990234375
+          ]
+        },
+        {
+          "text": "following stages:",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            303.6377868652344,
+            410.25,
+            377.55780029296875,
+            423.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "1",
+          "font_size": 12.0,
+          "bold": false,
+          "bbox": [
+            303.6377868652344,
+            428.1000061035156,
+            310.3097839355469,
+            444.5880126953125
+          ]
+        },
+        {
+          "text": "PDF text extraction",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            321.6377868652344,
+            428.25,
+            406.66778564453125,
+            441.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "2",
+          "font_size": 12.0,
+          "bold": false,
+          "bbox": [
+            303.6377868652344,
+            446.1000061035156,
+            310.3097839355469,
+            462.5880126953125
+          ]
+        },
+        {
+          "text": "Layout reconstruction",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            321.6377868652344,
+            446.25,
+            417.23779296875,
+            459.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "3",
+          "font_size": 12.0,
+          "bold": false,
+          "bbox": [
+            303.6377868652344,
+            464.1000061035156,
+            310.3097839355469,
+            480.5880126953125
+          ]
+        },
+        {
+          "text": "Semantic chunking",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            321.6377868652344,
+            464.25,
+            406.1177978515625,
+            477.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "4",
+          "font_size": 12.0,
+          "bold": false,
+          "bbox": [
+            303.6377868652344,
+            482.1000061035156,
+            310.3097839355469,
+            498.5880126953125
+          ]
+        },
+        {
+          "text": "Embedding generation",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            321.6377868652344,
+            482.25,
+            422.247802734375,
+            495.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "5",
+          "font_size": 12.0,
+          "bold": false,
+          "bbox": [
+            303.6377868652344,
+            500.1000061035156,
+            310.3097839355469,
+            516.5880126953125
+          ]
+        },
+        {
+          "text": "Vector database indexing",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            321.6377868652344,
+            500.25,
+            434.477783203125,
+            513.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "Table 1: Example Structured Data",
+          "font_size": 10.0,
+          "bold": true,
+          "bbox": [
+            78.0,
+            553.2999877929688,
+            237.49000549316406,
+            567.0700073242188
+          ]
+        }
+      ],
+      [
+        {
+          "text": "Model",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            162.46279907226562,
+            568.25,
+            189.69281005859375,
+            581.989990234375
+          ]
+        },
+        {
+          "text": "Parameters",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            226.53280639648438,
+            568.25,
+            278.2127990722656,
+            581.989990234375
+          ]
+        },
+        {
+          "text": "Year",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            290.2127990722656,
+            568.25,
+            311.3327941894531,
+            581.989990234375
+          ]
+        },
+        {
+          "text": "Notes",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            324.45281982421875,
+            568.25,
+            350.57281494140625,
+            581.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "GPT I 3",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            162.46279907226562,
+            586.25,
+            196.1927947998047,
+            599.989990234375
+          ]
+        },
+        {
+          "text": "175B",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            226.53280639648438,
+            586.25,
+            249.88279724121094,
+            599.989990234375
+          ]
+        },
+        {
+          "text": "2020",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            290.2127990722656,
+            586.25,
+            312.4527893066406,
+            599.989990234375
+          ]
+        },
+        {
+          "text": "Large language model",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            324.45281982421875,
+            586.25,
+            423.9527893066406,
+            599.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "BERT",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            162.46279907226562,
+            604.25,
+            189.13279724121094,
+            617.989990234375
+          ]
+        },
+        {
+          "text": "340M",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            226.53280639648438,
+            604.25,
+            251.5428009033203,
+            617.989990234375
+          ]
+        },
+        {
+          "text": "2018",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            290.2127990722656,
+            604.25,
+            312.4527893066406,
+            617.989990234375
+          ]
+        },
+        {
+          "text": "Bidirectional transformer",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            324.45281982421875,
+            604.25,
+            432.812744140625,
+            617.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "ResNet I 50",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            162.46279907226562,
+            622.25,
+            214.53280639648438,
+            635.989990234375
+          ]
+        },
+        {
+          "text": "25M",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            226.53280639648438,
+            622.25,
+            245.98280334472656,
+            635.989990234375
+          ]
+        },
+        {
+          "text": "2015",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            290.2127990722656,
+            622.25,
+            312.4527893066406,
+            635.989990234375
+          ]
+        },
+        {
+          "text": "Computer vision CNN",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            324.45281982421875,
+            622.25,
+            421.1327819824219,
+            635.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "Figure 1:  Example diagram placeholder. In real documents, figures may appear between",
+          "font_size": 10.0,
+          "bold": true,
+          "bbox": [
+            78.0,
+            663.25,
+            472.0498962402344,
+            677.0700073242188
+          ]
+        },
+        {
+          "text": "paragraphs and disrupt reading order during naive extraction.",
+          "font_size": 10.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            675.25,
+            349.2399597167969,
+            688.989990234375
+          ]
+        }
+      ],
+      [
+        {
+          "text": "Code Example",
+          "font_size": 14.0,
+          "bold": true,
+          "bbox": [
+            78.0,
+            719.02001953125,
+            174.4739990234375,
+            738.2979736328125
+          ]
+        }
+      ],
+      [
+        {
+          "text": "def chunk_document(text, chunk_size=500):",
+          "font_size": 8.0,
+          "bold": false,
+          "bbox": [
+            114.0,
+            744.5440673828125,
+            310.8000793457031,
+            754.5360717773438
+          ]
+        },
+        {
+          "text": "words = text.split()",
+          "font_size": 8.0,
+          "bold": false,
+          "bbox": [
+            114.0,
+            753.3440551757812,
+            229.20004272460938,
+            763.3360595703125
+          ]
+        }
+      ]
+    ]
+  },
+  {
+    "page": 2,
+    "raw": "chunks = []\n    for i in range(0, len(words), chunk_size):\n        chunk = \" \".join(words[i:i+chunk_size])\n        chunks.append(chunk)\n    return chunks\n1Footnote example: Footnotes are often extracted in incorrect order depending on how the parser handles bottom-of-page\nelements.",
+    "blocks": [
+      [
+        {
+          "text": "chunks = []",
+          "font_size": 8.0,
+          "bold": false,
+          "bbox": [
+            114.0,
+            78.54399871826172,
+            186.00001525878906,
+            88.53600311279297
+          ]
+        },
+        {
+          "text": "for i in range(0, len(words), chunk_size):",
+          "font_size": 8.0,
+          "bold": false,
+          "bbox": [
+            114.0,
+            87.34400177001953,
+            334.80010986328125,
+            97.33600616455078
+          ]
+        },
+        {
+          "text": "chunk = \" \".join(words[i:i+chunk_size])",
+          "font_size": 8.0,
+          "bold": false,
+          "bbox": [
+            114.0,
+            96.14399719238281,
+            339.60009765625,
+            106.13600158691406
+          ]
+        },
+        {
+          "text": "chunks.append(chunk)",
+          "font_size": 8.0,
+          "bold": false,
+          "bbox": [
+            114.0,
+            104.94400024414062,
+            248.40005493164062,
+            114.93600463867188
+          ]
+        },
+        {
+          "text": "return chunks",
+          "font_size": 8.0,
+          "bold": false,
+          "bbox": [
+            114.0,
+            113.7439956665039,
+            195.6000213623047,
+            123.73600006103516
+          ]
+        }
+      ],
+      [
+        {
+          "text": "1 Footnote example: Footnotes are often extracted in incorrect order depending on how the parser handles bottom-of-page",
+          "font_size": 6.4,
+          "bold": false,
+          "bbox": [
+            78.0,
+            139.1199951171875,
+            509.3343200683594,
+            152.39199829101562
+          ]
+        },
+        {
+          "text": "elements.",
+          "font_size": 8.0,
+          "bold": false,
+          "bbox": [
+            78.0,
+            153.39999389648438,
+            112.68000030517578,
+            164.39199829101562
+          ]
+        }
+      ]
+    ]
+  }
+]

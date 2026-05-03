@@ -1,4 +1,7 @@
 import * as pdfjsLib from 'pdfjs-dist';
+import { exportPdf } from '../core/exportPdf.js';
+import { webSave } from '../platform/webSave.js';
+import { electronSave } from '../platform/electronSave.js';
 
 // Set up PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -11,6 +14,7 @@ export class PDFRenderer {
     this.app = app;
     this.documents = new Map();
     this.pageElements = new Map();
+    this.originalPdfBytes = new Map();
     this.viewer = document.getElementById('pdf-viewer');
     this.container = document.getElementById('pdf-container');
     this.loading = false;
@@ -21,17 +25,25 @@ export class PDFRenderer {
 
   async loadDocument(data, tabId) {
     try {
-      const loadingTask = pdfjsLib.getDocument({ data });
+      // Store authoritative original bytes for this tab (defensive copy).
+      const bytes = data instanceof Uint8Array ? new Uint8Array(data) : new Uint8Array(data);
+      this.originalPdfBytes.set(tabId, bytes);
+
+      // Best-effort: also keep on tab (legacy callers). Do not assume it stays intact.
+      const tab = this.app?.tabManager?.getTab?.(tabId);
+      if (tab) tab.fileData = bytes;
+
+      const loadingTask = pdfjsLib.getDocument({ data: bytes });
       const pdfDoc = await loadingTask.promise;
-      
+
       this.documents.set(tabId, pdfDoc);
       this.pageElements.set(tabId, []);
-      
+
       // Update page count immediately after document is loaded
       this.app.updateUI();
-      
+
       await this.renderDocument(tabId);
-      
+
       return pdfDoc;
     } catch (error) {
       console.error('Error loading PDF:', error);
@@ -183,6 +195,19 @@ export class PDFRenderer {
   }
 
   switchToTab(tabId) {
+    // Re-hydrate tab.fileData from authoritative bytes if it was corrupted/zeroed.
+    const tab = this.app?.tabManager?.getTab?.(tabId);
+    const authoritative = this.originalPdfBytes.get(tabId);
+    if (
+      tab &&
+      authoritative instanceof Uint8Array &&
+      authoritative.length > 0 &&
+      (!(tab.fileData instanceof Uint8Array) || tab.fileData.length === 0)
+    ) {
+      // Important: keep a *copy* to avoid subtle detachment/mutation bugs.
+      tab.fileData = new Uint8Array(authoritative);
+    }
+
     const doc = this.documents.get(tabId);
     if (!doc) {
       // Show empty state with open file button
@@ -205,7 +230,6 @@ export class PDFRenderer {
 
     // Check if pages are already rendered for this tab
     const existingPages = this.pageElements.get(tabId);
-    const tab = this.app.tabManager.getTab(tabId);
     
     if (existingPages && existingPages.length > 0) {
       // Pages already rendered, just show them
@@ -253,6 +277,7 @@ export class PDFRenderer {
     }
     this.documents.delete(tabId);
     this.pageElements.delete(tabId);
+    this.originalPdfBytes.delete(tabId);
   }
 
   getDocument(tabId) {
@@ -358,12 +383,22 @@ export class PDFRenderer {
   }
 
   async exportPDF(tabId) {
-    // For now, just return the original data
-    // In a real implementation, this would include annotations
     const tab = this.app.tabManager.getTab(tabId);
-    if (!tab || !tab.fileData) return null;
+    const originalBytes = this.originalPdfBytes.get(tabId);
+    if (!tab || !(originalBytes instanceof Uint8Array) || originalBytes.length === 0) return null;
 
-    return Array.from(tab.fileData);
+    const annotationState = {
+      drawPaths: this.app.annotationManager?.drawPaths,
+      highlightPaths: this.app.annotationManager?.highlightPaths,
+      highlights: this.app.annotationManager?.highlights
+    };
+
+    const outBytes = await exportPdf(originalBytes, annotationState, {
+      tabId,
+      rotationDeg: tab.rotation || 0
+    });
+
+    return Array.from(outBytes);
   }
 
   async renderCurrentPage() {
@@ -390,5 +425,37 @@ export class PDFRenderer {
     } finally {
       this.loading = false;
     }
+  }
+
+  /**
+   * Platform-specific delivery for already-exported PDF bytes.
+   *
+   * @param {Uint8Array|number[]} pdfBytes
+   * @param {{ platform: 'web'|'electron', filename?: string, filePath?: string }} opts
+   */
+  async saveExportedPdf(pdfBytes, opts = {}) {
+    const platform = opts.platform || (window.electronAPI ? 'electron' : 'web');
+
+    if (platform === 'electron') {
+      return await electronSave(pdfBytes, { filePath: opts.filePath });
+    }
+
+    webSave(pdfBytes, { filename: opts.filename });
+    return { success: true };
+  }
+
+  /**
+   * Returns the original PDF bytes for a tab if available.
+   * (Used by AI chat ingestion.)
+   */
+  getTabPdfBytes(tabId) {
+    const bytes = this.originalPdfBytes.get(tabId);
+    if (bytes instanceof Uint8Array && bytes.length > 0) return bytes;
+
+    // Legacy fallback (should not be needed, but safe)
+    const tab = this.app?.tabManager?.getTab?.(tabId);
+    if (tab?.fileData instanceof Uint8Array && tab.fileData.length > 0) return tab.fileData;
+
+    return null;
   }
 }

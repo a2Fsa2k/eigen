@@ -9,7 +9,53 @@ export class AIChatPanel {
     this.input = document.getElementById('ai-chat-text');
     this.messages = document.getElementById('ai-chat-messages');
 
+    this._lastIngestedTabId = null;
+    this._ingesting = false;
+
+    // Reset per-tab ingest tracking as tabs change.
+    this.app?.tabManager?.on?.('tabChanged', (tabId) => {
+      // If user switches tabs, force next submit to consider ingest for that tab.
+      if (tabId !== this._lastIngestedTabId) this._lastIngestedTabId = null;
+    });
+
     this._bind();
+  }
+
+  async _ensureActivePdfIngested() {
+    const tab = this.app?.tabManager?.getActiveTab?.();
+    if (!tab) throw new Error('No active tab');
+
+    if (!this.app?.ragManager) throw new Error('RAG client not initialized');
+
+    // If we've already ingested this tab, don't re-ingest.
+    const existingDocId = this.app.ragManager.getDocIdForTab?.(tab.id) || null;
+    if (existingDocId) {
+      this._lastIngestedTabId = tab.id;
+      return;
+    }
+
+    // Avoid concurrent ingest if user spams enter.
+    if (this._ingesting) return;
+    this._ingesting = true;
+
+    try {
+      const ok = await this.app.ragManager.checkStatus();
+      if (!ok) throw new Error('RAG server not reachable at http://localhost:8000');
+
+      // Source of truth: if the PDF is visible, PDF.js has the full bytes.
+      const pdfDoc = this.app?.pdfRenderer?.getDocument?.(tab.id);
+      if (!pdfDoc) throw new Error('No PDF loaded in current tab');
+
+      const data = await pdfDoc.getData(); // Uint8Array
+      if (!(data instanceof Uint8Array) || data.length === 0) {
+        throw new Error('Could not read PDF bytes from renderer');
+      }
+
+      await this.app.ragManager.ingest(data, tab.name || 'document.pdf', tab.id);
+      this._lastIngestedTabId = tab.id;
+    } finally {
+      this._ingesting = false;
+    }
   }
 
   _bind() {
@@ -36,9 +82,14 @@ export class AIChatPanel {
 
         this.addMessage('user', text);
 
-        // Placeholder response for now.
-        // Wire this to your RAG backend next.
-        this.addMessage('assistant', 'Got it. (Chat backend not wired yet)');
+        try {
+          await this._ensureActivePdfIngested();
+          const activeTab = this.app?.tabManager?.getActiveTab?.();
+          const res = await this.app.ragManager.query(text, 5, activeTab?.id || null);
+          this.addMessage('assistant', res?.answer || '(no answer)');
+        } catch (err) {
+          this.addMessage('assistant', 'Error: ' + (err?.message || String(err)));
+        }
       });
     }
   }

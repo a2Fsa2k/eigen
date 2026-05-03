@@ -1,0 +1,72 @@
+=== PAGE 1 ===
+# Mock Research Document for PDF Extraction
+# Testing
+Omkar Patil 1 , Alex Chen 2
+1 Independent Researcher     2 Data Systems Lab
+## Abstract —  This mock document contains common formatting structures encountered in research
+papers and technical documents. It includes headings, lists, tables, pseudo two I column layouts,
+footnotes, code blocks, captions, and mixed text styles. The goal is to evaluate how well document
+parsers and OCR pipelines preserve logical reading order and structure for downstream RAG
+pipelines.
+## 1. Introduction
+Modern retrieval I augmented generation (RAG) systems depend heavily on reliable document
+parsing. However, PDFs often contain complex layouts such as multi I column text, tables,
+mathematical expressions, and captions. Incorrect ordering during extraction can lead to corrupted
+semantic chunks.
+## 2. Background
+PDFs are primarily designed for visual fidelity rather
+than semantic structure. Libraries often rely on
+positional heuristics to infer reading order.
+Challenges include:
+1
+Multi I column layouts
+2
+Figures with captions
+3
+Tables with merged cells
+4
+Footnotes and references
+## 3. Typical Parsing Pipeline
+A common pipeline for RAG ingestion consists of the
+following stages:
+1
+PDF text extraction
+2
+Layout reconstruction
+3
+Semantic chunking
+4
+Embedding generation
+5
+Vector database indexing
+## Table 1: Example Structured Data
+Model
+Parameters
+Year
+Notes
+GPT I 3
+175B
+2020
+Large language model
+BERT
+340M
+2018
+Bidirectional transformer
+ResNet I 50
+25M
+2015
+Computer vision CNN
+## Figure 1:  Example diagram placeholder. In real documents, figures may appear between
+paragraphs and disrupt reading order during naive extraction.
+## Code Example
+def chunk_document(text, chunk_size=500):
+words = text.split()
+
+=== PAGE 2 ===
+chunks = []
+for i in range(0, len(words), chunk_size):
+chunk = " ".join(words[i:i+chunk_size])
+chunks.append(chunk)
+return chunks
+1 Footnote example: Footnotes are often extracted in incorrect order depending on how the parser handles bottom-of-page
+elements.

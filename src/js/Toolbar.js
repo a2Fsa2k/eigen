@@ -15,13 +15,12 @@ export class Toolbar {
     this.setupPageNavigation();
     this.setupViewControls();
     this.setupFileButtons();
-    
+
     // Initialize save button to saved state (no changes initially)
     setTimeout(() => {
       const saveBtn = document.getElementById('btn-save');
       if (saveBtn) {
         saveBtn.classList.add('saved');
-        console.log('Save button initialized with saved state');
       }
     }, 100);
     
@@ -51,7 +50,6 @@ export class Toolbar {
     const saveBtn = document.getElementById('btn-save');
     if (saveBtn) {
       saveBtn.classList.remove('saved');
-      console.log('Save button marked as having unsaved changes');
     }
   }
 
@@ -246,22 +244,50 @@ export class Toolbar {
     if (!activeTab || !activeTab.hasChanges) return;
 
     const saveBtn = document.getElementById('btn-save');
-    
-    if (window.electronAPI && activeTab.path) {
+
+    try {
+      // Always export a real PDF with embedded annotations using the shared export engine.
       const pdfData = await this.app.pdfRenderer.exportPDF(activeTab.id);
-      const result = await window.electronAPI.savePdf(activeTab.path, pdfData);
-      
-      if (result.success) {
-        this.app.tabManager.updateTab(activeTab.id, { hasChanges: false });
-        
-        // Add 'saved' class to make button appear dull
-        saveBtn.classList.add('saved');
-        console.log('Save button marked as saved (dull)');
-        
-        alert('File saved successfully');
+
+      if (window.electronAPI) {
+        // Electron: Save to existing path, otherwise prompt Save As.
+        if (activeTab.path) {
+          const result = await this.app.pdfRenderer.saveExportedPdf(pdfData, {
+            platform: 'electron',
+            filePath: activeTab.path
+          });
+
+          if (!result?.success) throw new Error(result?.error || 'Failed to save PDF');
+        } else {
+          const defaultName = (activeTab.name || 'document').replace(/\.pdf$/i, '') + '-edited.pdf';
+          const saveAs = await window.electronAPI.savePdfDialog({
+            defaultPath: defaultName
+          });
+          if (!saveAs?.success) return; // user canceled
+
+          const result = await this.app.pdfRenderer.saveExportedPdf(pdfData, {
+            platform: 'electron',
+            filePath: saveAs.filePath
+          });
+          if (!result?.success) throw new Error(result?.error || 'Failed to save PDF');
+
+          // Update tab path so future saves overwrite.
+          this.app.tabManager.updateTab(activeTab.id, { path: saveAs.filePath, name: saveAs.fileName || activeTab.name });
+        }
       } else {
-        alert('Error saving file: ' + result.error);
+        // Web
+        await this.app.pdfRenderer.saveExportedPdf(pdfData, {
+          platform: 'web',
+          filename: (activeTab.name || 'document').replace(/\.pdf$/i, '') + '-edited.pdf'
+        });
       }
+
+      this.app.tabManager.updateTab(activeTab.id, { hasChanges: false });
+      saveBtn?.classList.add('saved');
+      alert('File saved successfully');
+    } catch (e) {
+      console.error('Save failed:', e);
+      alert('Error saving file: ' + (e?.message || String(e)));
     }
   }
 

@@ -86,6 +86,24 @@ ipcMain.handle('save-pdf', async (event, { filePath, data }) => {
   }
 });
 
+ipcMain.handle('save-pdf-dialog', async (event, opts = {}) => {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Save PDF',
+    defaultPath: opts.defaultPath || 'document-edited.pdf',
+    filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+  });
+
+  if (result.canceled || !result.filePath) {
+    return { success: false, canceled: true };
+  }
+
+  return {
+    success: true,
+    filePath: result.filePath,
+    fileName: result.filePath.split(/[\\/]/).pop()
+  };
+});
+
 ipcMain.handle('print-pdf', async (event, pdfData) => {
   // Printing will be handled by the renderer process
   // This is a placeholder for future implementation

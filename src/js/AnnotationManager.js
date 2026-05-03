@@ -125,18 +125,11 @@ export class AnnotationManager {
   }
 
   handleMouseDown(e) {
-    console.log('Mouse down:', {
-      tool: this.activeTool,
-      target: e.target,
-      tagName: e.target.tagName,
-      className: e.target.className
-    });
-    
     if (!this.activeTool) return;
-    
+
     // Find annotation layer or get it from page structure
     let annotationLayer = e.target.closest('.annotation-layer');
-    
+
     // If we're on a text span, get the annotation layer from page structure
     if (!annotationLayer && e.target.closest('.text-layer')) {
       const pageContainer = e.target.closest('.page-container');
@@ -144,9 +137,7 @@ export class AnnotationManager {
         annotationLayer = pageContainer.querySelector('.annotation-layer');
       }
     }
-    
-    console.log('Annotation layer found:', annotationLayer);
-    
+
     if (!annotationLayer) return;
 
     const activeTab = this.app.tabManager.getActiveTab();
@@ -156,8 +147,6 @@ export class AnnotationManager {
     const rect = annotationLayer.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
-    console.log('Mouse coordinates:', { x, y, clientX: e.clientX, clientY: e.clientY });
 
     if (this.activeTool === 'draw') {
       this.startNewDrawing(annotationLayer, x, y, activeTab.id);
@@ -192,12 +181,10 @@ export class AnnotationManager {
     if (!canvas) {
       canvas = document.createElement('canvas');
       canvas.className = 'draw-overlay-canvas';
-      
+
       // Get dimensions from annotation layer or parent
       const width = annotationLayer.offsetWidth || annotationLayer.clientWidth;
       const height = annotationLayer.offsetHeight || annotationLayer.clientHeight;
-      
-      console.log('Creating overlay canvas:', { width, height, x, y });
       
       canvas.width = width;
       canvas.height = height;
@@ -208,14 +195,10 @@ export class AnnotationManager {
       canvas.style.height = `${height}px`;
       // CSS handles pointer-events
       annotationLayer.appendChild(canvas);
-      
-      console.log('Canvas created:', canvas, 'Parent:', annotationLayer);
     }
     
     this.drawingEngine.initCanvas(canvas);
     this.drawingEngine.startDrawing(x, y);
-    
-    console.log('Drawing started at:', x, y, 'Canvas size:', canvas.width, canvas.height);
     
     this.currentAnnotation = {
       type: 'draw',

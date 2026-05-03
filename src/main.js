@@ -6,6 +6,7 @@ import { AnnotationManager } from './js/AnnotationManager.js';
 import { SearchManager } from './js/SearchManager.js';
 import { SettingsManager } from './js/SettingsManager.js';
 import { AIChatPanel } from './js/AIChatPanel.js';
+import { RagManager } from '../../eigen-rag/client/RagManager.js';
 
 class PDFEditor {
   constructor() {
@@ -16,6 +17,10 @@ class PDFEditor {
     this.annotationManager = new AnnotationManager(this);
     this.searchManager = new SearchManager(this);
     this.settingsManager = new SettingsManager(this);
+
+    // RAG client (web + electron renderer)
+    this.ragManager = new RagManager(this);
+
     this.aiChatPanel = new AIChatPanel(this);
 
     this.init();
@@ -228,9 +233,36 @@ class PDFEditor {
     }
 
     const tab = this.tabManager.getTab(tabId);
-    tab.fileData = new Uint8Array(file.data);
+
+    // Normalize incoming file bytes.
+    // - Electron dialog provides `data: number[]`
+    // - Some flows may provide `data: Uint8Array` (or ArrayBuffer)
+    let bytes;
+    if (file?.data instanceof Uint8Array) {
+      // Make a defensive copy in case this is a detached/zero-length view.
+      bytes = new Uint8Array(file.data);
+    } else if (file?.data instanceof ArrayBuffer) {
+      bytes = new Uint8Array(file.data);
+    } else if (Array.isArray(file?.data)) {
+      bytes = new Uint8Array(file.data);
+    } else {
+      throw new Error('Unsupported PDF data type');
+    }
+
+    // Force a standalone copy (guards against odd TypedArray views)
+    if (bytes && bytes.byteLength > 0) {
+      bytes = new Uint8Array(bytes);
+    }
+
+    tab.fileData = bytes;
+
+    console.log('Loaded PDF bytes', { name: file?.name, len: tab.fileData?.length });
 
     await this.pdfRenderer.loadDocument(tab.fileData, tabId);
+
+    // NOTE: RAG ingestion is intentionally NOT triggered here.
+    // Chat will ingest on-demand using PDF.js `pdfDoc.getData()`.
+
     // updateUI() is now called from loadDocument() right after the document is loaded
   }
 
@@ -261,6 +293,13 @@ class PDFEditor {
         // In browser, just show empty state
         this.showEmptyState();
       }
+    }
+
+    // If a tab is closed, also clear any cached RAG doc id for it.
+    try {
+      this.ragManager.clearTab(tabId);
+    } catch (e) {
+      console.warn('Failed to clear RAG state for closed tab', tabId, e);
     }
   }
 
@@ -311,3 +350,22 @@ class PDFEditor {
 // Initialize the app
 const app = new PDFEditor();
 window.pdfEditor = app;
+
+async function initApp() {
+  // ...existing code...
+
+  // If a tab is closed, also clear any cached RAG doc id for it.
+  if (app?.tabManager?.on) {
+    app.tabManager.on('tabClosed', (tabId) => {
+      try {
+        app?.ragManager?.clearTab?.(tabId);
+      } catch (e) {
+        console.warn('Failed to clear RAG state for closed tab', tabId, e);
+      }
+    });
+  }
+
+  // ...existing code...
+}
+
+initApp();

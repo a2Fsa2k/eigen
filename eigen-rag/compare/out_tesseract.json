@@ -1,0 +1,1616 @@
+[
+  {
+    "page": 1,
+    "text": "Mock Research Document for PDF Extraction\nTesting\n\nOmkar Patil\u2018, Alex Chen?\nIndependent Researcher %Data Systems Lab\n\nAbstract \u2014 This mock document contains common formatting structures encountered in research\npapers and technical documents. It includes headings, lists, tables, pseudo twolcolumn layouts,\nfootnotes, code blocks, captions, and mixed text styles. The goal is to evaluate how well document\nparsers and OCR pipelines preserve logical reading order and structure for downstream RAG\npipelines.\n\n1. Introduction\n\nModern retrievallaugmented generation (RAG) systems depend heavily on reliable document\nparsing. However, PDFs often contain complex layouts such as multilicolumn text, tables,\nmathematical expressions, and captions. Incorrect ordering during extraction can lead to corrupted\nsemantic chunks.\n\n2. Background 3. Typical Parsing Pipeline\nPDFs are primarily designed for visual fidelity rather A common pipeline for RAG ingestion consists of the\nthan semantic structure. Libraries often rely on following stages:\n\npositional heuristics to infer reading order.\nChallenges include:\n\n1\n\n2\n3\n4\n\nMultilcolumn layouts\nFigures with captions\nTables with merged cells\n\n1 PDF text extraction\nLayout reconstruction\nSemantic chunking\nEmbedding generation\n\na b~ WD\n\nVector database indexing\n\nFootnotes and references\n\nTable 1: Example Structured Data\n\n[Modol __| paramotes [ Year [Nows |\nGPTE3 175B 2020 | Large language model\n\nBERT 340M 2018 | Bidirectional transformer\nResNetl50 2015 | Gomputer vision CNN\n\nFigure 1: Example diagram placeholder. In real documents, figures may appear between\nparagraphs and disrupt reading order during naive extraction.\n\nCode Example\n\ndef chunk_document (text, chunk_size=500):\nwords = text.split()",
+    "words": [
+      {
+        "text": "Mock",
+        "conf": 91,
+        "left": 291,
+        "top": 230
+      },
+      {
+        "text": "Research",
+        "conf": 91,
+        "left": 433,
+        "top": 230
+      },
+      {
+        "text": "Document",
+        "conf": 91,
+        "left": 672,
+        "top": 230
+      },
+      {
+        "text": "for",
+        "conf": 92,
+        "left": 928,
+        "top": 231
+      },
+      {
+        "text": "PDF",
+        "conf": 92,
+        "left": 1011,
+        "top": 230
+      },
+      {
+        "text": "Extraction",
+        "conf": 91,
+        "left": 1125,
+        "top": 230
+      },
+      {
+        "text": "Testing",
+        "conf": 90,
+        "left": 739,
+        "top": 291
+      },
+      {
+        "text": "Omkar",
+        "conf": 91,
+        "left": 218,
+        "top": 392
+      },
+      {
+        "text": "Patil\u2018,",
+        "conf": 57,
+        "left": 310,
+        "top": 387
+      },
+      {
+        "text": "Alex",
+        "conf": 90,
+        "left": 390,
+        "top": 397
+      },
+      {
+        "text": "Chen?",
+        "conf": 79,
+        "left": 453,
+        "top": 387
+      },
+      {
+        "text": "Independent",
+        "conf": 92,
+        "left": 232,
+        "top": 430
+      },
+      {
+        "text": "Researcher",
+        "conf": 92,
+        "left": 394,
+        "top": 430
+      },
+      {
+        "text": "Systems",
+        "conf": 92,
+        "left": 646,
+        "top": 429
+      },
+      {
+        "text": "Lab",
+        "conf": 92,
+        "left": 761,
+        "top": 430
+      },
+      {
+        "text": "Abstract",
+        "conf": 91,
+        "left": 217,
+        "top": 513
+      },
+      {
+        "text": "\u2014",
+        "conf": 91,
+        "left": 337,
+        "top": 524
+      },
+      {
+        "text": "This",
+        "conf": 91,
+        "left": 373,
+        "top": 513
+      },
+      {
+        "text": "mock",
+        "conf": 93,
+        "left": 435,
+        "top": 513
+      },
+      {
+        "text": "document",
+        "conf": 91,
+        "left": 508,
+        "top": 513
+      },
+      {
+        "text": "contains",
+        "conf": 92,
+        "left": 637,
+        "top": 513
+      },
+      {
+        "text": "common",
+        "conf": 91,
+        "left": 748,
+        "top": 518
+      },
+      {
+        "text": "formatting",
+        "conf": 92,
+        "left": 862,
+        "top": 513
+      },
+      {
+        "text": "structures",
+        "conf": 92,
+        "left": 994,
+        "top": 514
+      },
+      {
+        "text": "encountered",
+        "conf": 91,
+        "left": 1124,
+        "top": 513
+      },
+      {
+        "text": "in",
+        "conf": 93,
+        "left": 1287,
+        "top": 513
+      },
+      {
+        "text": "research",
+        "conf": 93,
+        "left": 1316,
+        "top": 513
+      },
+      {
+        "text": "papers",
+        "conf": 89,
+        "left": 218,
+        "top": 552
+      },
+      {
+        "text": "and",
+        "conf": 89,
+        "left": 311,
+        "top": 547
+      },
+      {
+        "text": "technical",
+        "conf": 91,
+        "left": 364,
+        "top": 547
+      },
+      {
+        "text": "documents.",
+        "conf": 91,
+        "left": 481,
+        "top": 547
+      },
+      {
+        "text": "It",
+        "conf": 90,
+        "left": 635,
+        "top": 547
+      },
+      {
+        "text": "includes",
+        "conf": 91,
+        "left": 657,
+        "top": 547
+      },
+      {
+        "text": "headings,",
+        "conf": 92,
+        "left": 767,
+        "top": 547
+      },
+      {
+        "text": "lists,",
+        "conf": 92,
+        "left": 895,
+        "top": 547
+      },
+      {
+        "text": "tables,",
+        "conf": 92,
+        "left": 956,
+        "top": 547
+      },
+      {
+        "text": "pseudo",
+        "conf": 92,
+        "left": 1047,
+        "top": 547
+      },
+      {
+        "text": "twolcolumn",
+        "conf": 56,
+        "left": 1145,
+        "top": 547
+      },
+      {
+        "text": "layouts,",
+        "conf": 87,
+        "left": 1308,
+        "top": 547
+      },
+      {
+        "text": "footnotes,",
+        "conf": 88,
+        "left": 217,
+        "top": 580
+      },
+      {
+        "text": "code",
+        "conf": 93,
+        "left": 347,
+        "top": 580
+      },
+      {
+        "text": "blocks,",
+        "conf": 89,
+        "left": 416,
+        "top": 580
+      },
+      {
+        "text": "captions,",
+        "conf": 91,
+        "left": 509,
+        "top": 580
+      },
+      {
+        "text": "and",
+        "conf": 92,
+        "left": 629,
+        "top": 580
+      },
+      {
+        "text": "mixed",
+        "conf": 91,
+        "left": 683,
+        "top": 580
+      },
+      {
+        "text": "text",
+        "conf": 92,
+        "left": 763,
+        "top": 581
+      },
+      {
+        "text": "styles.",
+        "conf": 92,
+        "left": 817,
+        "top": 580
+      },
+      {
+        "text": "The",
+        "conf": 91,
+        "left": 903,
+        "top": 580
+      },
+      {
+        "text": "goal",
+        "conf": 81,
+        "left": 959,
+        "top": 580
+      },
+      {
+        "text": "is",
+        "conf": 81,
+        "left": 1020,
+        "top": 580
+      },
+      {
+        "text": "to",
+        "conf": 93,
+        "left": 1046,
+        "top": 581
+      },
+      {
+        "text": "evaluate",
+        "conf": 91,
+        "left": 1078,
+        "top": 580
+      },
+      {
+        "text": "how",
+        "conf": 91,
+        "left": 1191,
+        "top": 580
+      },
+      {
+        "text": "well",
+        "conf": 91,
+        "left": 1248,
+        "top": 580
+      },
+      {
+        "text": "document",
+        "conf": 89,
+        "left": 1304,
+        "top": 580
+      },
+      {
+        "text": "parsers",
+        "conf": 92,
+        "left": 218,
+        "top": 618
+      },
+      {
+        "text": "and",
+        "conf": 92,
+        "left": 318,
+        "top": 613
+      },
+      {
+        "text": "OCR",
+        "conf": 90,
+        "left": 372,
+        "top": 612
+      },
+      {
+        "text": "pipelines",
+        "conf": 91,
+        "left": 442,
+        "top": 613
+      },
+      {
+        "text": "preserve",
+        "conf": 92,
+        "left": 559,
+        "top": 618
+      },
+      {
+        "text": "logical",
+        "conf": 92,
+        "left": 675,
+        "top": 613
+      },
+      {
+        "text": "reading",
+        "conf": 92,
+        "left": 762,
+        "top": 613
+      },
+      {
+        "text": "order",
+        "conf": 91,
+        "left": 861,
+        "top": 613
+      },
+      {
+        "text": "and",
+        "conf": 92,
+        "left": 934,
+        "top": 613
+      },
+      {
+        "text": "structure",
+        "conf": 92,
+        "left": 988,
+        "top": 614
+      },
+      {
+        "text": "for",
+        "conf": 91,
+        "left": 1103,
+        "top": 613
+      },
+      {
+        "text": "downstream",
+        "conf": 91,
+        "left": 1144,
+        "top": 613
+      },
+      {
+        "text": "RAG",
+        "conf": 90,
+        "left": 1305,
+        "top": 612
+      },
+      {
+        "text": "pipelines.",
+        "conf": 92,
+        "left": 218,
+        "top": 647
+      },
+      {
+        "text": "1.",
+        "conf": 90,
+        "left": 219,
+        "top": 772
+      },
+      {
+        "text": "Introduction",
+        "conf": 90,
+        "left": 262,
+        "top": 772
+      },
+      {
+        "text": "Modern",
+        "conf": 92,
+        "left": 219,
+        "top": 836
+      },
+      {
+        "text": "retrievallaugmented",
+        "conf": 65,
+        "left": 320,
+        "top": 836
+      },
+      {
+        "text": "generation",
+        "conf": 91,
+        "left": 586,
+        "top": 836
+      },
+      {
+        "text": "(RAG)",
+        "conf": 92,
+        "left": 726,
+        "top": 835
+      },
+      {
+        "text": "systems",
+        "conf": 91,
+        "left": 812,
+        "top": 837
+      },
+      {
+        "text": "depend",
+        "conf": 91,
+        "left": 921,
+        "top": 836
+      },
+      {
+        "text": "heavily",
+        "conf": 90,
+        "left": 1022,
+        "top": 836
+      },
+      {
+        "text": "on",
+        "conf": 92,
+        "left": 1115,
+        "top": 841
+      },
+      {
+        "text": "reliable",
+        "conf": 92,
+        "left": 1155,
+        "top": 836
+      },
+      {
+        "text": "document",
+        "conf": 90,
+        "left": 1251,
+        "top": 836
+      },
+      {
+        "text": "parsing.",
+        "conf": 92,
+        "left": 218,
+        "top": 869
+      },
+      {
+        "text": "However,",
+        "conf": 92,
+        "left": 325,
+        "top": 869
+      },
+      {
+        "text": "PDFs",
+        "conf": 91,
+        "left": 450,
+        "top": 869
+      },
+      {
+        "text": "often",
+        "conf": 92,
+        "left": 526,
+        "top": 869
+      },
+      {
+        "text": "contain",
+        "conf": 92,
+        "left": 596,
+        "top": 869
+      },
+      {
+        "text": "complex",
+        "conf": 91,
+        "left": 693,
+        "top": 869
+      },
+      {
+        "text": "layouts",
+        "conf": 91,
+        "left": 805,
+        "top": 869
+      },
+      {
+        "text": "such",
+        "conf": 92,
+        "left": 900,
+        "top": 869
+      },
+      {
+        "text": "as",
+        "conf": 92,
+        "left": 967,
+        "top": 874
+      },
+      {
+        "text": "multilicolumn",
+        "conf": 83,
+        "left": 1004,
+        "top": 869
+      },
+      {
+        "text": "text,",
+        "conf": 91,
+        "left": 1180,
+        "top": 870
+      },
+      {
+        "text": "tables,",
+        "conf": 91,
+        "left": 1240,
+        "top": 869
+      },
+      {
+        "text": "mathematical",
+        "conf": 91,
+        "left": 218,
+        "top": 902
+      },
+      {
+        "text": "expressions,",
+        "conf": 91,
+        "left": 391,
+        "top": 902
+      },
+      {
+        "text": "and",
+        "conf": 93,
+        "left": 554,
+        "top": 902
+      },
+      {
+        "text": "captions.",
+        "conf": 91,
+        "left": 608,
+        "top": 902
+      },
+      {
+        "text": "Incorrect",
+        "conf": 92,
+        "left": 729,
+        "top": 902
+      },
+      {
+        "text": "ordering",
+        "conf": 92,
+        "left": 843,
+        "top": 902
+      },
+      {
+        "text": "during",
+        "conf": 91,
+        "left": 952,
+        "top": 902
+      },
+      {
+        "text": "extraction",
+        "conf": 92,
+        "left": 1038,
+        "top": 902
+      },
+      {
+        "text": "can",
+        "conf": 93,
+        "left": 1165,
+        "top": 907
+      },
+      {
+        "text": "lead",
+        "conf": 92,
+        "left": 1219,
+        "top": 902
+      },
+      {
+        "text": "to",
+        "conf": 90,
+        "left": 1278,
+        "top": 903
+      },
+      {
+        "text": "corrupted",
+        "conf": 92,
+        "left": 1309,
+        "top": 902
+      },
+      {
+        "text": "semantic",
+        "conf": 90,
+        "left": 218,
+        "top": 936
+      },
+      {
+        "text": "chunks.",
+        "conf": 92,
+        "left": 336,
+        "top": 936
+      },
+      {
+        "text": "2.",
+        "conf": 92,
+        "left": 136,
+        "top": 1036
+      },
+      {
+        "text": "Background",
+        "conf": 91,
+        "left": 181,
+        "top": 1036
+      },
+      {
+        "text": "3.",
+        "conf": 90,
+        "left": 845,
+        "top": 1036
+      },
+      {
+        "text": "Typical",
+        "conf": 90,
+        "left": 887,
+        "top": 1036
+      },
+      {
+        "text": "Parsing",
+        "conf": 91,
+        "left": 1034,
+        "top": 1036
+      },
+      {
+        "text": "Pipeline",
+        "conf": 92,
+        "left": 1188,
+        "top": 1036
+      },
+      {
+        "text": "PDFs",
+        "conf": 90,
+        "left": 137,
+        "top": 1116
+      },
+      {
+        "text": "are",
+        "conf": 92,
+        "left": 213,
+        "top": 1121
+      },
+      {
+        "text": "primarily",
+        "conf": 91,
+        "left": 261,
+        "top": 1116
+      },
+      {
+        "text": "designed",
+        "conf": 92,
+        "left": 373,
+        "top": 1116
+      },
+      {
+        "text": "for",
+        "conf": 92,
+        "left": 493,
+        "top": 1116
+      },
+      {
+        "text": "visual",
+        "conf": 93,
+        "left": 534,
+        "top": 1116
+      },
+      {
+        "text": "fidelity",
+        "conf": 92,
+        "left": 612,
+        "top": 1116
+      },
+      {
+        "text": "rather",
+        "conf": 92,
+        "left": 700,
+        "top": 1116
+      },
+      {
+        "text": "A",
+        "conf": 89,
+        "left": 844,
+        "top": 1116
+      },
+      {
+        "text": "common",
+        "conf": 89,
+        "left": 870,
+        "top": 1121
+      },
+      {
+        "text": "pipeline",
+        "conf": 92,
+        "left": 985,
+        "top": 1116
+      },
+      {
+        "text": "for",
+        "conf": 93,
+        "left": 1088,
+        "top": 1116
+      },
+      {
+        "text": "RAG",
+        "conf": 92,
+        "left": 1130,
+        "top": 1115
+      },
+      {
+        "text": "ingestion",
+        "conf": 92,
+        "left": 1197,
+        "top": 1116
+      },
+      {
+        "text": "consists",
+        "conf": 92,
+        "left": 1315,
+        "top": 1116
+      },
+      {
+        "text": "of",
+        "conf": 92,
+        "left": 1423,
+        "top": 1116
+      },
+      {
+        "text": "the",
+        "conf": 92,
+        "left": 1453,
+        "top": 1116
+      },
+      {
+        "text": "than",
+        "conf": 92,
+        "left": 135,
+        "top": 1149
+      },
+      {
+        "text": "semantic",
+        "conf": 92,
+        "left": 198,
+        "top": 1149
+      },
+      {
+        "text": "structure.",
+        "conf": 92,
+        "left": 317,
+        "top": 1150
+      },
+      {
+        "text": "Libraries",
+        "conf": 91,
+        "left": 441,
+        "top": 1149
+      },
+      {
+        "text": "often",
+        "conf": 92,
+        "left": 554,
+        "top": 1149
+      },
+      {
+        "text": "rely",
+        "conf": 92,
+        "left": 624,
+        "top": 1149
+      },
+      {
+        "text": "on",
+        "conf": 91,
+        "left": 676,
+        "top": 1154
+      },
+      {
+        "text": "following",
+        "conf": 92,
+        "left": 844,
+        "top": 1149
+      },
+      {
+        "text": "stages:",
+        "conf": 91,
+        "left": 960,
+        "top": 1150
+      },
+      {
+        "text": "positional",
+        "conf": 90,
+        "left": 136,
+        "top": 1183
+      },
+      {
+        "text": "heuristics",
+        "conf": 89,
+        "left": 262,
+        "top": 1183
+      },
+      {
+        "text": "to",
+        "conf": 88,
+        "left": 385,
+        "top": 1184
+      },
+      {
+        "text": "infer",
+        "conf": 88,
+        "left": 417,
+        "top": 1183
+      },
+      {
+        "text": "reading",
+        "conf": 92,
+        "left": 479,
+        "top": 1183
+      },
+      {
+        "text": "order.",
+        "conf": 92,
+        "left": 579,
+        "top": 1183
+      },
+      {
+        "text": "Challenges",
+        "conf": 92,
+        "left": 136,
+        "top": 1232
+      },
+      {
+        "text": "include:",
+        "conf": 92,
+        "left": 283,
+        "top": 1233
+      },
+      {
+        "text": "1",
+        "conf": 89,
+        "left": 138,
+        "top": 1284
+      },
+      {
+        "text": "2",
+        "conf": 96,
+        "left": 136,
+        "top": 1334
+      },
+      {
+        "text": "3",
+        "conf": 97,
+        "left": 136,
+        "top": 1384
+      },
+      {
+        "text": "4",
+        "conf": 96,
+        "left": 136,
+        "top": 1434
+      },
+      {
+        "text": "layouts",
+        "conf": 91,
+        "left": 364,
+        "top": 1283
+      },
+      {
+        "text": "Figures",
+        "conf": 92,
+        "left": 187,
+        "top": 1333
+      },
+      {
+        "text": "with",
+        "conf": 92,
+        "left": 285,
+        "top": 1333
+      },
+      {
+        "text": "captions",
+        "conf": 92,
+        "left": 343,
+        "top": 1333
+      },
+      {
+        "text": "Tables",
+        "conf": 92,
+        "left": 186,
+        "top": 1383
+      },
+      {
+        "text": "with",
+        "conf": 92,
+        "left": 276,
+        "top": 1383
+      },
+      {
+        "text": "merged",
+        "conf": 91,
+        "left": 335,
+        "top": 1383
+      },
+      {
+        "text": "cells",
+        "conf": 90,
+        "left": 436,
+        "top": 1383
+      },
+      {
+        "text": "1",
+        "conf": 87,
+        "left": 847,
+        "top": 1201
+      },
+      {
+        "text": "PDF",
+        "conf": 82,
+        "left": 896,
+        "top": 1199
+      },
+      {
+        "text": "text",
+        "conf": 92,
+        "left": 957,
+        "top": 1200
+      },
+      {
+        "text": "extraction",
+        "conf": 90,
+        "left": 1010,
+        "top": 1199
+      },
+      {
+        "text": "Layout",
+        "conf": 91,
+        "left": 896,
+        "top": 1249
+      },
+      {
+        "text": "reconstruction",
+        "conf": 91,
+        "left": 986,
+        "top": 1249
+      },
+      {
+        "text": "Semantic",
+        "conf": 92,
+        "left": 895,
+        "top": 1298
+      },
+      {
+        "text": "chunking",
+        "conf": 93,
+        "left": 1018,
+        "top": 1299
+      },
+      {
+        "text": "Embedding",
+        "conf": 92,
+        "left": 896,
+        "top": 1349
+      },
+      {
+        "text": "generation",
+        "conf": 92,
+        "left": 1042,
+        "top": 1349
+      },
+      {
+        "text": "a",
+        "conf": 77,
+        "left": 845,
+        "top": 1401
+      },
+      {
+        "text": "Vector",
+        "conf": 92,
+        "left": 895,
+        "top": 1399
+      },
+      {
+        "text": "database",
+        "conf": 92,
+        "left": 982,
+        "top": 1399
+      },
+      {
+        "text": "indexing",
+        "conf": 91,
+        "left": 1105,
+        "top": 1399
+      },
+      {
+        "text": "Footnotes",
+        "conf": 89,
+        "left": 187,
+        "top": 1433
+      },
+      {
+        "text": "and",
+        "conf": 91,
+        "left": 317,
+        "top": 1433
+      },
+      {
+        "text": "references",
+        "conf": 90,
+        "left": 372,
+        "top": 1433
+      },
+      {
+        "text": "Table",
+        "conf": 91,
+        "left": 217,
+        "top": 1547
+      },
+      {
+        "text": "1:",
+        "conf": 92,
+        "left": 299,
+        "top": 1547
+      },
+      {
+        "text": "Example",
+        "conf": 92,
+        "left": 332,
+        "top": 1547
+      },
+      {
+        "text": "Structured",
+        "conf": 92,
+        "left": 452,
+        "top": 1546
+      },
+      {
+        "text": "Data",
+        "conf": 92,
+        "left": 602,
+        "top": 1547
+      },
+      {
+        "text": "paramotes",
+        "conf": 54,
+        "left": 630,
+        "top": 1555
+      },
+      {
+        "text": "[",
+        "conf": 74,
+        "left": 787,
+        "top": 1555
+      },
+      {
+        "text": "Year",
+        "conf": 83,
+        "left": 807,
+        "top": 1555
+      },
+      {
+        "text": "|",
+        "conf": 66,
+        "left": 1094,
+        "top": 1574
+      },
+      {
+        "text": "GPTE3",
+        "conf": 51,
+        "left": 453,
+        "top": 1637
+      },
+      {
+        "text": "175B",
+        "conf": 85,
+        "left": 632,
+        "top": 1638
+      },
+      {
+        "text": "2020",
+        "conf": 96,
+        "left": 807,
+        "top": 1638
+      },
+      {
+        "text": "|",
+        "conf": 93,
+        "left": 876,
+        "top": 1634
+      },
+      {
+        "text": "Large",
+        "conf": 92,
+        "left": 904,
+        "top": 1638
+      },
+      {
+        "text": "language",
+        "conf": 92,
+        "left": 982,
+        "top": 1638
+      },
+      {
+        "text": "model",
+        "conf": 92,
+        "left": 1104,
+        "top": 1638
+      },
+      {
+        "text": "BERT",
+        "conf": 91,
+        "left": 454,
+        "top": 1688
+      },
+      {
+        "text": "340M",
+        "conf": 92,
+        "left": 630,
+        "top": 1688
+      },
+      {
+        "text": "2018",
+        "conf": 94,
+        "left": 807,
+        "top": 1688
+      },
+      {
+        "text": "|",
+        "conf": 93,
+        "left": 876,
+        "top": 1684
+      },
+      {
+        "text": "Bidirectional",
+        "conf": 91,
+        "left": 904,
+        "top": 1688
+      },
+      {
+        "text": "transformer",
+        "conf": 91,
+        "left": 1061,
+        "top": 1688
+      },
+      {
+        "text": "ResNetl50",
+        "conf": 40,
+        "left": 454,
+        "top": 1738
+      },
+      {
+        "text": "2015",
+        "conf": 96,
+        "left": 807,
+        "top": 1738
+      },
+      {
+        "text": "|",
+        "conf": 92,
+        "left": 880,
+        "top": 1720
+      },
+      {
+        "text": "Gomputer",
+        "conf": 85,
+        "left": 903,
+        "top": 1737
+      },
+      {
+        "text": "vision",
+        "conf": 92,
+        "left": 1032,
+        "top": 1738
+      },
+      {
+        "text": "CNN",
+        "conf": 69,
+        "left": 1111,
+        "top": 1737
+      },
+      {
+        "text": "Figure",
+        "conf": 92,
+        "left": 219,
+        "top": 1852
+      },
+      {
+        "text": "1:",
+        "conf": 92,
+        "left": 311,
+        "top": 1852
+      },
+      {
+        "text": "Example",
+        "conf": 91,
+        "left": 344,
+        "top": 1852
+      },
+      {
+        "text": "diagram",
+        "conf": 92,
+        "left": 458,
+        "top": 1852
+      },
+      {
+        "text": "placeholder.",
+        "conf": 92,
+        "left": 567,
+        "top": 1852
+      },
+      {
+        "text": "In",
+        "conf": 91,
+        "left": 727,
+        "top": 1852
+      },
+      {
+        "text": "real",
+        "conf": 91,
+        "left": 757,
+        "top": 1852
+      },
+      {
+        "text": "documents,",
+        "conf": 91,
+        "left": 810,
+        "top": 1852
+      },
+      {
+        "text": "figures",
+        "conf": 92,
+        "left": 961,
+        "top": 1852
+      },
+      {
+        "text": "may",
+        "conf": 89,
+        "left": 1054,
+        "top": 1857
+      },
+      {
+        "text": "appear",
+        "conf": 89,
+        "left": 1113,
+        "top": 1857
+      },
+      {
+        "text": "between",
+        "conf": 91,
+        "left": 1207,
+        "top": 1852
+      },
+      {
+        "text": "paragraphs",
+        "conf": 91,
+        "left": 218,
+        "top": 1886
+      },
+      {
+        "text": "and",
+        "conf": 92,
+        "left": 366,
+        "top": 1886
+      },
+      {
+        "text": "disrupt",
+        "conf": 92,
+        "left": 420,
+        "top": 1886
+      },
+      {
+        "text": "reading",
+        "conf": 91,
+        "left": 512,
+        "top": 1886
+      },
+      {
+        "text": "order",
+        "conf": 92,
+        "left": 611,
+        "top": 1886
+      },
+      {
+        "text": "during",
+        "conf": 92,
+        "left": 684,
+        "top": 1886
+      },
+      {
+        "text": "naive",
+        "conf": 90,
+        "left": 770,
+        "top": 1886
+      },
+      {
+        "text": "extraction.",
+        "conf": 90,
+        "left": 843,
+        "top": 1886
+      },
+      {
+        "text": "Code",
+        "conf": 91,
+        "left": 218,
+        "top": 2010
+      },
+      {
+        "text": "Example",
+        "conf": 91,
+        "left": 328,
+        "top": 2011
+      },
+      {
+        "text": "def",
+        "conf": 88,
+        "left": 318,
+        "top": 2076
+      },
+      {
+        "text": "chunk_document",
+        "conf": 88,
+        "left": 372,
+        "top": 2076
+      },
+      {
+        "text": "(text,",
+        "conf": 90,
+        "left": 563,
+        "top": 2076
+      },
+      {
+        "text": "chunk_size=500):",
+        "conf": 53,
+        "left": 652,
+        "top": 2075
+      },
+      {
+        "text": "words",
+        "conf": 92,
+        "left": 371,
+        "top": 2100
+      },
+      {
+        "text": "=",
+        "conf": 91,
+        "left": 451,
+        "top": 2105
+      },
+      {
+        "text": "text.split()",
+        "conf": 47,
+        "left": 478,
+        "top": 2099
+      }
+    ]
+  },
+  {
+    "page": 2,
+    "text": "chunks = []\n\nfor i in range (0, len(words), chunk_size):\nchunk = \" \".join(words[i:i+chunk_size])\nchunks.append (chunk)\n\nreturn chunks\n\n\"Footnote example: Footnotes are often extracted in incorrect order depending on how the parser handles bottom-of-page\nelements.",
+    "words": [
+      {
+        "text": "chunks",
+        "conf": 91,
+        "left": 372,
+        "top": 226
+      },
+      {
+        "text": "=",
+        "conf": 91,
+        "left": 464,
+        "top": 230
+      },
+      {
+        "text": "[]",
+        "conf": 87,
+        "left": 496,
+        "top": 226
+      },
+      {
+        "text": "for",
+        "conf": 92,
+        "left": 372,
+        "top": 250
+      },
+      {
+        "text": "i",
+        "conf": 89,
+        "left": 425,
+        "top": 249
+      },
+      {
+        "text": "in",
+        "conf": 89,
+        "left": 452,
+        "top": 249
+      },
+      {
+        "text": "range",
+        "conf": 39,
+        "left": 492,
+        "top": 253
+      },
+      {
+        "text": "(0,",
+        "conf": 39,
+        "left": 563,
+        "top": 249
+      },
+      {
+        "text": "len(words),",
+        "conf": 82,
+        "left": 612,
+        "top": 250
+      },
+      {
+        "text": "chunk_size):",
+        "conf": 90,
+        "left": 772,
+        "top": 249
+      },
+      {
+        "text": "chunk",
+        "conf": 91,
+        "left": 425,
+        "top": 275
+      },
+      {
+        "text": "=",
+        "conf": 95,
+        "left": 504,
+        "top": 279
+      },
+      {
+        "text": "\"",
+        "conf": 87,
+        "left": 533,
+        "top": 275
+      },
+      {
+        "text": "\".join(words[i:i+chunk_size])",
+        "conf": 55,
+        "left": 560,
+        "top": 274
+      },
+      {
+        "text": "chunks.append",
+        "conf": 85,
+        "left": 425,
+        "top": 299
+      },
+      {
+        "text": "(chunk)",
+        "conf": 85,
+        "left": 603,
+        "top": 299
+      },
+      {
+        "text": "return",
+        "conf": 90,
+        "left": 372,
+        "top": 325
+      },
+      {
+        "text": "chunks",
+        "conf": 91,
+        "left": 465,
+        "top": 324
+      },
+      {
+        "text": "example:",
+        "conf": 91,
+        "left": 321,
+        "top": 401
+      },
+      {
+        "text": "Footnotes",
+        "conf": 92,
+        "left": 419,
+        "top": 401
+      },
+      {
+        "text": "are",
+        "conf": 93,
+        "left": 523,
+        "top": 405
+      },
+      {
+        "text": "often",
+        "conf": 92,
+        "left": 561,
+        "top": 401
+      },
+      {
+        "text": "extracted",
+        "conf": 92,
+        "left": 617,
+        "top": 401
+      },
+      {
+        "text": "in",
+        "conf": 92,
+        "left": 715,
+        "top": 401
+      },
+      {
+        "text": "incorrect",
+        "conf": 92,
+        "left": 738,
+        "top": 401
+      },
+      {
+        "text": "order",
+        "conf": 92,
+        "left": 829,
+        "top": 401
+      },
+      {
+        "text": "depending",
+        "conf": 92,
+        "left": 887,
+        "top": 401
+      },
+      {
+        "text": "on",
+        "conf": 90,
+        "left": 997,
+        "top": 405
+      },
+      {
+        "text": "how",
+        "conf": 90,
+        "left": 1028,
+        "top": 401
+      },
+      {
+        "text": "the",
+        "conf": 92,
+        "left": 1074,
+        "top": 401
+      },
+      {
+        "text": "parser",
+        "conf": 92,
+        "left": 1112,
+        "top": 405
+      },
+      {
+        "text": "handles",
+        "conf": 92,
+        "left": 1182,
+        "top": 401
+      },
+      {
+        "text": "bottom-of-page",
+        "conf": 92,
+        "left": 1265,
+        "top": 401
+      },
+      {
+        "text": "elements.",
+        "conf": 91,
+        "left": 218,
+        "top": 434
+      }
+    ]
+  }
+]

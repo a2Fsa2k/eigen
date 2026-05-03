@@ -1,0 +1,15 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+sentence-transformers>=2.7.0
+hnswlib>=0.8.0
+rank-bm25>=0.2.2
+PyMuPDF>=1.24.0          # fitz — fast PDF text extraction
+pytesseract>=0.3.10
+Pillow>=10.0.0
+openai>=1.0.0            # or swap for ollama client
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+numpy>=1.26.0
+
+google-genai>=0.6.0
